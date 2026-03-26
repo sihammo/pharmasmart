@@ -16,10 +16,11 @@ services:
         sync: false # Set this in Render dashboard
 
   # Frontend Static Site
-  - type: static
+  - type: web
     name: pharmasmart-frontend
+    runtime: static
     buildCommand: npm install && npm run build
-    publishDir: dist
+    staticPublishPath: ./dist
     envVars:
       - key: VITE_API_BASE_URL
         value: https://pharmasmart-backend.onrender.com/api # Replace with your actual backend URL after first deployment
