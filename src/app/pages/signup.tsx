@@ -35,7 +35,7 @@ export function SignupPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: "USER" // Default role
+          role: "CUSTOMER" // Default role matches backend enum
         }),
       });
 

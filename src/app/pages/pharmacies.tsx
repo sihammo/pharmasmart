@@ -4,14 +4,28 @@ import { toast } from "sonner";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { MapPin, Navigation, Phone, Clock, Search, Map } from "lucide-react";
+import { MapPin, Navigation, Phone, Clock, Search, Map as MapIcon } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix for default marker icons in Leaflet
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+const DefaultIcon = L.icon({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 export function PharmaciesPage() {
   const [pharmacies, setPharmacies] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPharmacy, setSelectedPharmacy] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
   useEffect(() => {
@@ -35,10 +49,10 @@ export function PharmaciesPage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div>
-        <h1 className="text-4xl mb-2" style={{ color: '#0F766E' }}>Nearby Pharmacies</h1>
+        <h1 className="text-4xl font-bold mb-2" style={{ color: '#0F766E' }}>Nearby Pharmacies</h1>
         <p className="text-xl text-gray-600">Find pharmacies near you with real-time availability</p>
       </div>
 
@@ -51,23 +65,23 @@ export function PharmaciesPage() {
             placeholder="Search by name or location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-12 text-lg border-2 focus:border-[#0F766E] rounded-lg"
+            className="pl-10 h-12 text-lg border-2 focus:border-[#0F766E] rounded-xl"
           />
         </div>
-        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+        <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
           <Button
             variant={viewMode === "list" ? "default" : "ghost"}
             onClick={() => setViewMode("list")}
-            className={viewMode === "list" ? "bg-[#0F766E] hover:bg-[#0d6560] text-white" : ""}
+            className={`rounded-lg ${viewMode === "list" ? "bg-[#0F766E] text-white shadow-md" : "text-gray-600 hover:text-[#0F766E]"}`}
           >
             List View
           </Button>
           <Button
             variant={viewMode === "map" ? "default" : "ghost"}
             onClick={() => setViewMode("map")}
-            className={viewMode === "map" ? "bg-[#0F766E] hover:bg-[#0d6560] text-white" : ""}
+            className={`rounded-lg ${viewMode === "map" ? "bg-[#0F766E] text-white shadow-md" : "text-gray-600 hover:text-[#0F766E]"}`}
           >
-            <Map className="w-5 h-5 mr-2" />
+            <MapIcon className="w-5 h-5 mr-2" />
             Map View
           </Button>
         </div>
@@ -75,53 +89,39 @@ export function PharmaciesPage() {
 
       {/* Map View */}
       {viewMode === "map" && (
-        <Card className="p-8 rounded-2xl">
-          <div className="relative h-[500px] rounded-xl overflow-hidden" style={{ backgroundColor: '#B7D1CC' }}>
-            {/* Mock Map */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
-                  <MapPin className="w-10 h-10 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl mb-2" style={{ color: '#0F766E' }}>Interactive Map View</h3>
-                  <p className="text-gray-600 text-lg">
-                    Map integration would show pharmacy locations with teal-colored pins
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Mock Pharmacy Pins */}
-            {filteredPharmacies.slice(0, 3).map((pharmacy, index) => (
-              <div
-                key={pharmacy.id}
-                className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-full"
-                style={{
-                  left: `${30 + index * 20}%`,
-                  top: `${40 + index * 15}%`,
-                }}
-                onClick={() => setSelectedPharmacy(pharmacy.id)}
-              >
-                <div className="relative">
-                  <MapPin className="w-10 h-10" style={{ color: '#0F766E', fill: '#0F766E' }} />
-                  {selectedPharmacy === pharmacy.id && (
-                    <Card className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-4 w-64 shadow-xl rounded-xl">
-                      <h4 style={{ color: '#0F766E' }}>{pharmacy.name}</h4>
-                      <p className="text-sm text-gray-600 mb-2">{pharmacy.address}</p>
-                      <div className="flex gap-2">
-                        <Button size="sm" className="flex-1 bg-[#0F766E] hover:bg-[#0d6560] text-white">
-                          Directions
-                        </Button>
-                        <Button size="sm" variant="outline" style={{ borderColor: '#0F766E', color: '#0F766E' }}>
-                          <Phone className="w-4 h-4" />
-                        </Button>
+        <Card className="p-4 rounded-2xl overflow-hidden shadow-xl border-2 border-[#B7D1CC]/30">
+          <div className="h-[600px] w-full rounded-xl overflow-hidden relative z-0">
+             <MapContainer 
+              center={[40.7128, -74.0060]} 
+              zoom={12} 
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {filteredPharmacies.map((pharmacy) => (
+                pharmacy.location?.coordinates && (
+                  <Marker 
+                    key={pharmacy.id} 
+                    position={[pharmacy.location.coordinates[1], pharmacy.location.coordinates[0]]}
+                  >
+                    <Popup className="rounded-xl overflow-hidden">
+                      <div className="p-2 space-y-2">
+                        <h4 className="font-bold text-[#0F766E]">{pharmacy.name}</h4>
+                        <p className="text-sm text-gray-600">{pharmacy.address}</p>
+                        <div className="flex gap-2 pt-2 border-t border-gray-100">
+                          <Button size="sm" className="bg-[#0F766E] text-white flex-1 h-8 rounded-lg">Directions</Button>
+                          <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-lg border-[#0F766E] text-[#0F766E]">
+                            <Phone className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </Card>
-                  )}
-                </div>
-              </div>
-            ))}
+                    </Popup>
+                  </Marker>
+                )
+              ))}
+            </MapContainer>
           </div>
         </Card>
       )}
@@ -129,60 +129,57 @@ export function PharmaciesPage() {
       {/* List View */}
       {viewMode === "list" && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPharmacies.length === 0 ? (
-            <Card className="col-span-full p-12 text-center rounded-2xl">
+          {isLoading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="h-96 rounded-2xl bg-gray-50 animate-pulse" />
+            ))
+          ) : filteredPharmacies.length === 0 ? (
+            <Card className="col-span-full p-20 text-center rounded-2xl border-2 border-dashed border-[#B7D1CC]/50">
               <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
               <h3 className="text-2xl mb-2 text-gray-600">No pharmacies found</h3>
               <p className="text-gray-500">Try adjusting your search terms</p>
             </Card>
           ) : (
             filteredPharmacies.map((pharmacy) => (
-              <Card key={pharmacy.id} className="overflow-hidden hover:shadow-xl transition-shadow rounded-2xl">
-                <div className="h-48 overflow-hidden">
+              <Card key={pharmacy.id} className="overflow-hidden hover:shadow-2xl transition-all duration-300 rounded-2xl group border-[#B7D1CC]/30 hover:border-[#0F766E]/50">
+                <div className="h-48 overflow-hidden relative">
                   <ImageWithFallback
                     src={pharmacy.image}
                     alt={pharmacy.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
+                  {!pharmacy.isApproved && (
+                    <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                      Pending Verification
+                    </div>
+                  )}
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-4 bg-white">
                   <div>
-                    <h3 className="text-xl mb-2" style={{ color: '#0F766E' }}>{pharmacy.name}</h3>
-                    <p className="text-gray-600 mb-2">{pharmacy.address}</p>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Navigation className="w-4 h-4" />
-                      <span className="text-lg">{pharmacy.distance} away</span>
-                    </div>
+                    <h3 className="text-xl font-bold mb-1" style={{ color: '#0F766E' }}>{pharmacy.name}</h3>
+                    <p className="text-gray-500 text-sm flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> {pharmacy.address}
+                    </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <div className={`px-3 py-1 rounded-full text-sm ${
-                      pharmacy.status === "Closed"
-                        ? "bg-red-100 text-red-800"
-                        : pharmacy.status === "Open 24/7" 
-                          ? "bg-[#0F766E] text-white" 
-                          : "bg-green-100 text-green-800"
-                    }`}>
-                      {pharmacy.status}
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Clock className="w-4 h-4" />
-                      <span className="text-sm">{pharmacy.closingTime}</span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-none px-3 py-1 rounded-full text-xs">
+                      Open Now
+                    </Badge>
+                    <span className="text-xs text-gray-400 font-medium uppercase tracking-tighter italic">License: {pharmacy.licenseNumber || "Pending"}</span>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-2">
                     <Button 
-                      className="flex-1 bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg"
-                      disabled={pharmacy.status === "Closed"}
+                      className="flex-1 bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-xl h-11"
                     >
                       <Navigation className="w-4 h-4 mr-2" />
-                      Directions
+                      Visit Store
                     </Button>
                     <Button 
                       variant="outline" 
                       size="icon"
-                      className="border-2 rounded-lg"
+                      className="border-2 rounded-xl h-11 w-11 hover:bg-teal-50"
                       style={{ borderColor: '#0F766E', color: '#0F766E' }}
                     >
                       <Phone className="w-5 h-5" />
