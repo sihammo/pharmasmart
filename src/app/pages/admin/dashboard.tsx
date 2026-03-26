@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "../../components/ui/card";
 import { Users, ShoppingBag, Pill, TrendingUp, DollarSign, MapPin } from "lucide-react";
+import { Link } from "react-router";
 import { apiClient } from "../../api/client";
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -157,28 +158,37 @@ export function AdminDashboard() {
           </div>
         </Card>
 
-        {/* Quick Actions & Welcome */}
         <div className="space-y-6">
-          <Card className="p-8 rounded-2xl shadow-xl border-none relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0F766E 0%, #2F8F7E 100%)' }}>
-             <div className="relative z-10">
-                <h2 className="text-3xl font-bold text-white mb-2">Systems Online</h2>
-                <p className="text-teal-50 mb-8 opacity-80">All services are running smoothly. Database connection is stable.</p>
+          <Card className="p-8 rounded-3xl shadow-2xl border-none relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0F766E 0%, #2F8F7E 100%)' }}>
+             <div className="relative z-10 space-y-6">
+                <div>
+                   <h2 className="text-3xl font-black text-white mb-2 leading-tight">System Controls</h2>
+                   <p className="text-teal-50 opacity-80 text-lg">Centralized oversight for the entire pharmaceutical network.</p>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <button className="p-6 bg-white/10 hover:bg-white/20 rounded-2xl text-white transition-all text-center flex flex-col items-center gap-3 backdrop-blur-sm border border-white/10">
-                    <Users className="w-8 h-8" />
-                    <span className="font-semibold text-sm">Review Users</span>
-                  </button>
-                  <button className="p-6 bg-white/10 hover:bg-white/20 rounded-2xl text-white transition-all text-center flex flex-col items-center gap-3 backdrop-blur-sm border border-white/10">
-                    <ShoppingBag className="w-8 h-8" />
-                    <span className="font-semibold text-sm">Process Orders</span>
-                  </button>
+                  <Link to="/admin/users" className="p-6 bg-white/10 hover:bg-white/20 rounded-2xl text-white transition-all text-center flex flex-col items-center gap-4 backdrop-blur-md border border-white/20 group">
+                    <Users className="w-10 h-10 group-hover:scale-110 transition-transform" />
+                    <span className="font-bold text-sm uppercase tracking-widest">Accounts</span>
+                  </Link>
+                  <Link to="/admin/pharmacies" className="p-6 bg-white/10 hover:bg-white/20 rounded-2xl text-white transition-all text-center flex flex-col items-center gap-4 backdrop-blur-md border border-white/20 group">
+                    <MapPin className="w-10 h-10 group-hover:scale-110 transition-transform" />
+                    <span className="font-bold text-sm uppercase tracking-widest">Pharmacies</span>
+                  </Link>
+                  <Link to="/admin/medicines" className="p-6 bg-white/10 hover:bg-white/20 rounded-2xl text-white transition-all text-center flex flex-col items-center gap-4 backdrop-blur-md border border-white/20 group">
+                    <Pill className="w-10 h-10 group-hover:scale-110 transition-transform" />
+                    <span className="font-bold text-sm uppercase tracking-widest">Inventory</span>
+                  </Link>
+                  <Link to="/admin/orders" className="p-6 bg-white/10 hover:bg-white/20 rounded-2xl text-white transition-all text-center flex flex-col items-center gap-4 backdrop-blur-md border border-white/20 group">
+                    <ShoppingBag className="w-10 h-10 group-hover:scale-110 transition-transform" />
+                    <span className="font-bold text-sm uppercase tracking-widest">Orders</span>
+                  </Link>
                 </div>
              </div>
              {/* Decorative circles */}
              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
              <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
           </Card>
-          
+
           <Card className="p-6 rounded-2xl border-[#B7D1CC]/30 border-2">
              <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center border border-teal-100">

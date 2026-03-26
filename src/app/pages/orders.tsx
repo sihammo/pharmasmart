@@ -2,133 +2,127 @@ import { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
-import { ShoppingCart, Trash2, Plus, Minus, Package, CheckCircle } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, Package, CheckCircle, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { apiClient } from "../api/client";
 import { toast } from "sonner";
+import { useCart } from "../context/CartContext";
 
 export function OrdersPage() {
-  const [cartItems, setCartItems] = useState<any[]>([]);
+  const { cartItems, removeFromCart, updateQuantity, clearCart, subtotal } = useCart();
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    try {
+      const data = await apiClient("/orders/myorders");
+      setOrders(data);
+    } catch (error: any) {
+      toast.error("Failed to load order history");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const data = await apiClient("/orders");
-        setOrders(data);
-      } catch (error: any) {
-        toast.error("Failed to load order history");
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchOrders();
   }, []);
 
-  const updateQuantity = (id: number, change: number) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+    setIsCheckingOut(true);
+    try {
+      // Map cart items to the format backend expects
+      const orderData = {
+        pharmacyId: cartItems[0].pharmacyId, // Assuming all items from same pharmacy for simplicity
+        items: cartItems.map(item => ({
+          medicineId: item._id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        totalAmount: subtotal + (subtotal > 50 ? 0 : 5.99)
+      };
+
+      await apiClient("/orders", {
+        method: "POST",
+        body: JSON.stringify(orderData)
+      });
+
+      toast.success("Order placed successfully!");
+      clearCart();
+      fetchOrders();
+    } catch (error: any) {
+      toast.error(error.message || "Checkout failed");
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
 
-  const removeItem = (id: number) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 50 ? 0 : 5.99;
+  const shipping = subtotal > 50 || subtotal === 0 ? 0 : 5.99;
   const total = subtotal + shipping;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-4xl mb-2" style={{ color: '#0F766E' }}>Orders & Cart</h1>
+        <h1 className="text-4xl font-bold mb-2" style={{ color: '#0F766E' }}>Orders & Cart</h1>
         <p className="text-xl text-gray-600">Manage your shopping cart and order history</p>
       </div>
 
       <Tabs defaultValue="cart" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2 h-12 p-1 rounded-xl" style={{ backgroundColor: '#B7D1CC' }}>
-          <TabsTrigger 
-            value="cart" 
-            className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white"
-          >
+        <TabsList className="grid w-full max-w-md grid-cols-2 h-12 p-1 rounded-xl bg-teal-50 border border-teal-100">
+          <TabsTrigger value="cart" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
             <ShoppingCart className="w-5 h-5 mr-2" />
-            Shopping Cart ({cartItems.length})
+            Cart ({cartItems.length})
           </TabsTrigger>
-          <TabsTrigger 
-            value="history"
-            className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white"
-          >
+          <TabsTrigger value="history" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
             <Package className="w-5 h-5 mr-2" />
-            Order History
+            History
           </TabsTrigger>
         </TabsList>
 
-        {/* Shopping Cart */}
         <TabsContent value="cart" className="space-y-6">
           {cartItems.length === 0 ? (
-            <Card className="p-12 text-center rounded-2xl">
-              <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+            <Card className="p-12 text-center rounded-2xl border-2 border-dashed border-teal-100">
+              <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
               <h3 className="text-2xl mb-2 text-gray-600">Your cart is empty</h3>
-              <p className="text-gray-500 mb-6">Add some items to get started</p>
-              <Button className="bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg">
-                Browse Medicines
+              <p className="text-gray-500 mb-6">Explore our medicine selection and start shopping.</p>
+              <Button onClick={() => window.location.href='/medicines'} className="bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-xl h-12 px-8">
+                Go to Shop
               </Button>
             </Card>
           ) : (
-            <div className="grid lg:grid-cols-3 gap-6">
-              {/* Cart Items */}
+            <div className="grid lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-4">
                 {cartItems.map((item) => (
-                  <Card key={item.id} className="p-6 rounded-2xl">
-                    <div className="flex gap-4">
-                      <div className="w-20 h-20 rounded-xl flex items-center justify-center text-4xl" style={{ backgroundColor: '#B7D1CC' }}>
-                        {item.image}
+                  <Card key={item._id} className="p-6 rounded-2xl hover:border-teal-400 transition-colors border-2 border-transparent">
+                    <div className="flex gap-6">
+                      <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-4xl bg-teal-50 border border-teal-100">
+                        💊
                       </div>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-start justify-between">
-                          <h3 className="text-xl" style={{ color: '#0F766E' }}>{item.name}</h3>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeItem(item.id)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="text-xl font-bold" style={{ color: '#0F766E' }}>{item.name}</h3>
+                            <p className="text-sm text-gray-400">Inventory ID: {item._id.slice(-6)}</p>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => removeFromCart(item._id)} className="text-red-400 hover:text-red-600 hover:bg-red-50">
                             <Trash2 className="w-5 h-5" />
                           </Button>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => updateQuantity(item.id, -1)}
-                              className="w-8 h-8 rounded-lg border-2"
-                              style={{ borderColor: '#0F766E', color: '#0F766E' }}
-                            >
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="flex items-center gap-4 bg-gray-50 p-1 rounded-xl">
+                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(item._id, -1)} className="w-8 h-8 rounded-lg">
                               <Minus className="w-4 h-4" />
                             </Button>
-                            <span className="text-lg w-8 text-center">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className="w-8 h-8 rounded-lg border-2"
-                              style={{ borderColor: '#0F766E', color: '#0F766E' }}
-                            >
+                            <span className="font-bold text-lg">{item.quantity}</span>
+                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(item._id, 1)} className="w-8 h-8 rounded-lg">
                               <Plus className="w-4 h-4" />
                             </Button>
                           </div>
-                          <span className="text-2xl" style={{ color: '#0F766E' }}>
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </span>
+                          <p className="text-2xl font-bold" style={{ color: '#0F766E' }}>${(item.price * item.quantity).toFixed(2)}</p>
                         </div>
                       </div>
                     </div>
@@ -136,42 +130,31 @@ export function OrdersPage() {
                 ))}
               </div>
 
-              {/* Order Summary */}
               <div className="lg:col-span-1">
-                <Card className="p-6 rounded-2xl sticky top-24">
-                  <h3 className="text-2xl mb-6" style={{ color: '#0F766E' }}>Order Summary</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between text-lg">
-                      <span className="text-gray-600">Subtotal</span>
+                <Card className="p-6 rounded-2xl border-2 border-teal-600/10 shadow-xl shadow-teal-900/5">
+                  <h3 className="text-2xl font-bold mb-6" style={{ color: '#0F766E' }}>Summary</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Subtotal</span>
                       <span>${subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-lg">
-                      <span className="text-gray-600">Shipping</span>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Delivery</span>
                       <span>{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span>
                     </div>
-                    {shipping === 0 && (
-                      <p className="text-sm px-3 py-2 rounded-lg" style={{ backgroundColor: '#B7D1CC', color: '#0F766E' }}>
-                        🎉 Free shipping on orders over $50
-                      </p>
-                    )}
-                    <Separator />
-                    <div className="flex justify-between text-xl">
-                      <span style={{ color: '#0F766E' }}>Total</span>
-                      <span style={{ color: '#0F766E' }}>${total.toFixed(2)}</span>
+                    <Separator className="my-4" />
+                    <div className="flex justify-between text-2xl font-bold" style={{ color: '#0F766E' }}>
+                      <span>Total</span>
+                      <span>${total.toFixed(2)}</span>
                     </div>
-                    <Button 
-                      className="w-full h-12 text-lg bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg mt-6"
-                    >
-                      Proceed to Checkout
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      className="w-full border-2 rounded-lg"
-                      style={{ borderColor: '#0F766E', color: '#0F766E' }}
-                    >
-                      Continue Shopping
-                    </Button>
                   </div>
+                  <Button 
+                    onClick={handleCheckout} 
+                    disabled={isCheckingOut}
+                    className="w-full h-14 text-lg bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-xl mt-8 shadow-lg shadow-teal-900/20"
+                  >
+                    {isCheckingOut ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</> : "Complete Checkout"}
+                  </Button>
                 </Card>
               </div>
             </div>
@@ -179,47 +162,34 @@ export function OrdersPage() {
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
-          {orders.length === 0 ? (
-            <Card className="p-12 text-center rounded-2xl">
-              <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-2xl mb-2 text-gray-600">No order history</h3>
-              <p className="text-gray-500">Your past orders will appear here</p>
+          {isLoading ? (
+            <div className="p-12 text-center text-gray-400">Loading your history...</div>
+          ) : orders.length === 0 ? (
+            <Card className="p-12 text-center rounded-2xl border-2 border-dashed border-gray-100">
+              <Package className="w-16 h-16 mx-auto mb-4 text-gray-200" />
+              <h3 className="text-2xl mb-2 text-gray-600">No past orders</h3>
+              <p className="text-gray-500">Your order history will appear here once you make a purchase.</p>
             </Card>
           ) : (
             orders.map((order) => (
-              <Card key={order._id} className="p-6 rounded-2xl hover:shadow-lg transition-shadow">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-xl" style={{ color: '#0F766E' }}>{order._id.slice(-8).toUpperCase()}</h3>
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        order.status === "DELIVERED" 
-                          ? "bg-green-100 text-green-800" 
-                          : order.status === "PENDING"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-blue-100 text-blue-800"
+              <Card key={order._id} className="p-6 rounded-2xl hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-4">
+                   <div className="flex items-center gap-3">
+                      <div className="p-2 bg-teal-50 rounded-lg">
+                        <Package className="w-5 h-5 text-teal-600" />
+                      </div>
+                      <h3 className="font-bold">Order #{order._id.slice(-8).toUpperCase()}</h3>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        order.status === "Completed" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
                       }`}>
-                        {order.status === "DELIVERED" && <CheckCircle className="w-4 h-4 inline mr-1" />}
                         {order.status}
                       </span>
-                    </div>
-                    <p className="text-gray-600">
-                      Ordered on {new Date(order.createdAt).toLocaleDateString()} • {order.items.length} item{order.items.length !== 1 ? 's' : ''}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Pharmacy: {order.pharmacyId?.name}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl" style={{ color: '#0F766E' }}>${order.totalAmount.toFixed(2)}</span>
-                    <Button 
-                      variant="outline"
-                      className="border-2 rounded-lg"
-                      style={{ borderColor: '#0F766E', color: '#0F766E' }}
-                    >
-                      View Details
-                    </Button>
-                  </div>
+                   </div>
+                   <p className="text-lg font-bold" style={{ color: '#0F766E' }}>${order.totalAmount?.toFixed(2)}</p>
+                </div>
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <p>Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
+                  <Button variant="link" className="text-teal-600 p-0 h-4">View Invoice</Button>
                 </div>
               </Card>
             ))

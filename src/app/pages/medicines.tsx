@@ -4,15 +4,17 @@ import { toast } from "sonner";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Search, Filter, ShoppingCart, Pill } from "lucide-react";
+import { Search, Filter, ShoppingCart, Pill, ChevronRight, Star } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Slider } from "../components/ui/slider";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
+import { useCart } from "../context/CartContext";
 
 const categories = ["All", "Pain Relief", "Antibiotics", "Vitamins", "Allergy"];
 
 export function MedicinesPage() {
+  const { addToCart } = useCart();
   const [medicines, setMedicines] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,7 +30,6 @@ export function MedicinesPage() {
         setMedicines(data);
       } catch (error: any) {
         toast.error("Failed to load medicines");
-        console.error(error);
       } finally {
         setIsLoading(false);
       }
@@ -37,162 +38,152 @@ export function MedicinesPage() {
   }, []);
 
   const filteredMedicines = medicines.filter((medicine) => {
-    const matchesSearch = medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (medicine.manufacturer && medicine.manufacturer.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = medicine.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || medicine.category === selectedCategory;
     const matchesPrice = medicine.price >= priceRange[0] && medicine.price <= priceRange[1];
-    const matchesStock = !inStockOnly || medicine.stock >= 1; // Assuming stock is a number in backend
+    const matchesStock = !inStockOnly || medicine.stockQuantity > 0;
     
     return matchesSearch && matchesCategory && matchesPrice && matchesStock;
   });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <div>
-        <h1 className="text-4xl mb-2" style={{ color: '#0F766E' }}>Search Medicines</h1>
+        <h1 className="text-4xl font-bold mb-2" style={{ color: '#0F766E' }}>Search Medicines</h1>
         <p className="text-xl text-gray-600">Find and compare thousands of medicines</p>
       </div>
 
-      {/* Search and Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <Input
-            type="search"
-            placeholder="Search medicines..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-12 text-lg border-2 focus:border-[#0F766E] rounded-lg"
-          />
+           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+           <Input
+              type="search"
+              placeholder="Search medicines..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-14 text-lg border-2 focus:border-[#0F766E] rounded-2xl shadow-sm"
+           />
         </div>
         <Button
-          variant="outline"
-          className="border-2 rounded-lg"
-          style={{ borderColor: '#0F766E', color: '#0F766E' }}
-          onClick={() => setShowFilters(!showFilters)}
+           variant="outline"
+           className="h-14 px-8 border-2 rounded-2xl font-bold"
+           style={{ borderColor: '#0F766E', color: '#0F766E' }}
+           onClick={() => setShowFilters(!showFilters)}
         >
           <Filter className="w-5 h-5 mr-2" />
-          {showFilters ? 'Hide Filters' : 'Show Filters'}
+          {showFilters ? 'Hide Filters' : 'Filters'}
         </Button>
       </div>
 
-      {/* Category Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {categories.map((category) => (
-          <Button
-            key={category}
-            variant={selectedCategory === category ? "default" : "outline"}
-            onClick={() => setSelectedCategory(category)}
-            className={selectedCategory === category 
-              ? "bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg whitespace-nowrap" 
-              : "border-2 rounded-lg whitespace-nowrap"
-            }
-            style={selectedCategory !== category ? { borderColor: '#5FA79A', color: '#0F766E' } : {}}
-          >
-            {category}
-          </Button>
-        ))}
-      </div>
-
-      {/* Filters Panel */}
       {showFilters && (
-        <Card className="p-6 rounded-2xl" style={{ backgroundColor: '#B7D1CC' }}>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <Label className="text-lg mb-4 block" style={{ color: '#0F766E' }}>
-                  Price Range: ${priceRange[0]} - ${priceRange[1]}
-                </Label>
-                <Slider
-                  min={0}
-                  max={50}
-                  step={1}
-                  value={priceRange}
-                  onValueChange={setPriceRange}
-                  className="w-full"
-                />
+        <Card className="p-8 rounded-2xl border-2 border-teal-50" style={{ backgroundColor: '#B7D1CC/10' }}>
+           <div className="grid md:grid-cols-2 gap-12">
+              <div className="space-y-6">
+                 <Label className="text-xl font-bold" style={{ color: '#0F766E' }}>Categories</Label>
+                 <div className="flex flex-wrap gap-3">
+                   {categories.map((c) => (
+                     <Button
+                        key={c}
+                        onClick={() => setSelectedCategory(c)}
+                        className={`rounded-xl px-6 h-11 font-medium transition-all ${
+                          selectedCategory === c ? "bg-[#0F766E] text-white shadow-lg" : "bg-white text-teal-800 border-2 border-teal-100 hover:border-teal-400"
+                        }`}
+                     >
+                       {c}
+                     </Button>
+                   ))}
+                 </div>
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  id="inStock"
-                  checked={inStockOnly}
-                  onCheckedChange={(checked) => setInStockOnly(checked as boolean)}
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="inStock" className="text-lg cursor-pointer" style={{ color: '#0F766E' }}>
-                  In Stock Only
-                </Label>
+              <div className="space-y-8">
+                 <div className="flex justify-between items-center">
+                    <Label className="text-xl font-bold" style={{ color: '#0F766E' }}>Max Price: ${priceRange[1]}</Label>
+                    <div className="flex items-center gap-3">
+                      <Checkbox 
+                        id="stock" 
+                        checked={inStockOnly} 
+                        onCheckedChange={(checked) => setInStockOnly(!!checked)} 
+                        className="w-5 h-5" 
+                      />
+                      <label htmlFor="stock" className="font-medium text-teal-800 cursor-pointer">In Stock Only</label>
+                    </div>
+                 </div>
+                 <Slider
+                    min={0}
+                    max={500}
+                    step={1}
+                    value={[priceRange[1]]}
+                    onValueChange={(v) => setPriceRange([0, v[0]])}
+                    className="w-full h-2"
+                 />
               </div>
-            </div>
-          </div>
+           </div>
         </Card>
       )}
 
       {/* Results */}
       <div>
-        <p className="text-gray-600 mb-4 text-lg">
-          Showing {filteredMedicines.length} result{filteredMedicines.length !== 1 ? 's' : ''}
-        </p>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMedicines.length === 0 ? (
-            <Card className="col-span-full p-12 text-center rounded-2xl">
-              <Pill className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-2xl mb-2 text-gray-600">No medicines found</h3>
-              <p className="text-gray-500">Try adjusting your filters or search terms</p>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {isLoading ? (
+            Array.from({ length: 9 }).map((_, i) => (
+              <Card key={i} className="h-[450px] rounded-3xl animate-pulse bg-teal-50/50 border-2 border-teal-50" />
+            ))
+          ) : filteredMedicines.length === 0 ? (
+            <Card className="col-span-full p-24 text-center rounded-3xl border-2 border-dashed border-teal-100 bg-teal-50/30">
+               <Pill className="w-20 h-20 mx-auto mb-6 text-teal-200" />
+               <h3 className="text-3xl font-bold text-teal-800 mb-2">No results found</h3>
+               <p className="text-xl text-teal-600/60 max-w-md mx-auto">Try widening your price range or exploring different categories.</p>
             </Card>
           ) : (
             filteredMedicines.map((medicine) => (
-              <Card key={medicine.id} className="overflow-hidden hover:shadow-xl transition-shadow rounded-2xl">
-                <div className="h-48 overflow-hidden" style={{ backgroundColor: '#B7D1CC' }}>
-                  <ImageWithFallback
-                    src={medicine.image}
-                    alt={medicine.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6 space-y-4">
-                  <div>
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-xl flex-1" style={{ color: '#0F766E' }}>{medicine.name}</h3>
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        medicine.stock === "In Stock" 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-orange-100 text-orange-800"
+              <Card key={medicine._id} className="group relative overflow-hidden rounded-3xl border-2 border-teal-50 hover:border-teal-400 hover:shadow-2xl hover:shadow-teal-900/10 transition-all duration-500 bg-white">
+                 <div className="h-56 overflow-hidden relative">
+                    <ImageWithFallback 
+                      src={medicine.imageUrl} 
+                      alt={medicine.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    />
+                    <div className="absolute top-4 right-4 flex flex-col gap-2">
+                      <span className={`px-4 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-md ${
+                        medicine.stockQuantity > 0 ? "bg-white/90 text-teal-800" : "bg-red-500/90 text-white"
                       }`}>
-                        {medicine.stock}
+                        {medicine.stockQuantity > 0 ? `${medicine.stockQuantity} In Stock` : "Out of Stock"}
                       </span>
+                      {medicine.requiresPrescription && (
+                        <span className="bg-orange-500/90 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-md">
+                          R𝗑 Only
+                        </span>
+                      )}
                     </div>
-                    <p className="text-gray-600 mb-1">{medicine.description}</p>
-                    <p className="text-sm text-gray-500">{medicine.manufacturer}</p>
-                  </div>
+                 </div>
+                 <div className="p-8 space-y-6">
+                    <div>
+                       <h3 className="text-2xl font-bold mb-2 group-hover:text-teal-600 transition-colors" style={{ color: '#0F766E' }}>{medicine.name}</h3>
+                       <p className="text-gray-500 line-clamp-2 text-sm leading-relaxed">{medicine.description || "No description available for this medicine."}</p>
+                    </div>
 
-                  <div className="flex items-center gap-1 text-yellow-500">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i}>
-                        {i < Math.floor(medicine.rating) ? '★' : '☆'}
-                      </span>
-                    ))}
-                    <span className="text-gray-600 ml-2 text-sm">({medicine.rating})</span>
-                  </div>
+                    <div className="flex items-center gap-1.5 py-1">
+                       {[1,2,3,4,5].map(i => (
+                         <Star key={i} className={`w-4 h-4 ${i <= 4 ? "fill-yellow-400 text-yellow-400" : "fill-gray-100 text-gray-200"}`} />
+                       ))}
+                       <span className="text-sm font-bold text-teal-800 ml-1">4.2</span>
+                    </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <span className="text-3xl" style={{ color: '#0F766E' }}>
-                      ${medicine.price.toFixed(2)}
-                    </span>
-                    <Button 
-                      className="bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg"
-                      disabled={medicine.stock !== "In Stock"}
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Add to Cart
-                    </Button>
-                  </div>
-                </div>
+                    <div className="flex items-center justify-between pt-4 border-t border-teal-50">
+                       <div>
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Price</p>
+                          <p className="text-3xl font-black" style={{ color: '#0F766E' }}>${medicine.price.toFixed(2)}</p>
+                       </div>
+                       <Button 
+                          onClick={() => addToCart(medicine)}
+                          disabled={medicine.stockQuantity <= 0}
+                          className="bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-2xl h-14 px-8 shadow-lg shadow-teal-900/10 active:scale-95 transition-all"
+                       >
+                          <ShoppingCart className="w-5 h-5 mr-2" />
+                          Add to Cart
+                       </Button>
+                    </div>
+                 </div>
               </Card>
             ))
           )}

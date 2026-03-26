@@ -103,16 +103,30 @@ export function PharmaciesPage() {
               {filteredPharmacies.map((pharmacy) => (
                 pharmacy.location?.coordinates && (
                   <Marker 
-                    key={pharmacy.id} 
+                    key={pharmacy._id} 
                     position={[pharmacy.location.coordinates[1], pharmacy.location.coordinates[0]]}
                   >
-                    <Popup className="rounded-xl overflow-hidden">
-                      <div className="p-2 space-y-2">
-                        <h4 className="font-bold text-[#0F766E]">{pharmacy.name}</h4>
-                        <p className="text-sm text-gray-600">{pharmacy.address}</p>
-                        <div className="flex gap-2 pt-2 border-t border-gray-100">
-                          <Button size="sm" className="bg-[#0F766E] text-white flex-1 h-8 rounded-lg">Directions</Button>
-                          <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-lg border-[#0F766E] text-[#0F766E]">
+                    <Popup className="rounded-xl overflow-hidden shadow-2xl">
+                      <div className="p-3 space-y-3 min-w-[200px]">
+                        <div>
+                           <h4 className="font-bold text-[#0F766E] text-lg">{pharmacy.name}</h4>
+                           <p className="text-sm text-gray-500 leading-tight">{pharmacy.address}</p>
+                        </div>
+                        <div className="flex gap-2 pt-3 border-t border-teal-50">
+                          <Button 
+                            size="sm" 
+                            onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.coordinates[1]},${pharmacy.location.coordinates[0]}`, '_blank')}
+                            className="bg-[#0F766E] text-white flex-1 h-10 rounded-xl font-bold shadow-lg shadow-teal-900/10"
+                          >
+                             <Navigation className="w-4 h-4 mr-2" />
+                             Go
+                          </Button>
+                          <Button 
+                             size="sm" 
+                             variant="outline" 
+                             onClick={() => window.location.href = `tel:${pharmacy.phone}`}
+                             className="h-10 w-10 p-0 rounded-xl border-2 border-teal-100 text-[#0F766E] hover:bg-teal-50"
+                          >
                             <Phone className="w-4 h-4" />
                           </Button>
                         </div>

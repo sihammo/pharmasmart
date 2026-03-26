@@ -14,6 +14,8 @@ import { AdminLayout } from "./layouts/admin-layout";
 import { AdminDashboard } from "./pages/admin/dashboard";
 import { AdminUsers } from "./pages/admin/users";
 import { AdminOrders } from "./pages/admin/orders";
+import { AdminMedicines } from "./pages/admin/medicines";
+import { AdminPharmacies } from "./pages/admin/pharmacies";
 import { NotFound } from "./pages/not-found";
 
 export const router = createBrowserRouter([

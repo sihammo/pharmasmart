@@ -24,6 +24,8 @@ export function AdminLayout() {
     return location.pathname.startsWith(path);
   };
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Navbar */}
@@ -39,29 +41,33 @@ export function AdminLayout() {
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </Button>
             <Link to="/admin" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: '#0F766E' }}>
                 <Package className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <span className="text-xl hidden sm:inline" style={{ color: '#0F766E' }}>MediCare+</span>
-                <span className="text-xs block text-gray-500 hidden sm:block">Admin Panel</span>
+              <div className="flex flex-col">
+                <span className="text-xl font-black tracking-tight leading-none" style={{ color: '#0F766E' }}>PHARMA<span className="text-teal-400">SMART</span></span>
+                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mt-1">Management Cluster</span>
               </div>
             </Link>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <p className="text-sm" style={{ color: '#0F766E' }}>Admin User</p>
-              <p className="text-xs text-gray-500">admin@medicare.com</p>
+              <p className="text-sm font-bold" style={{ color: '#0F766E' }}>{user.name || "Administrator"}</p>
+              <p className="text-[10px] text-gray-400 font-mono uppercase">{user.email || "system@pharmasmart.io"}</p>
             </div>
-            <Link to="/login">
-              <Button variant="ghost" size="icon">
+            <div className="h-10 w-10 rounded-full bg-teal-50 border-2 border-teal-100 flex items-center justify-center text-teal-700 font-bold overflow-hidden shadow-sm">
+               {user.name?.charAt(0) || "A"}
+            </div>
+            <Link to="/login" onClick={() => localStorage.clear()}>
+              <Button variant="ghost" size="icon" className="hover:bg-red-50 hover:text-red-500 rounded-full transition-colors">
                 <LogOut className="w-5 h-5" />
               </Button>
             </Link>
           </div>
         </div>
       </header>
+
 
       <div className="flex">
         {/* Sidebar - Desktop */}
