@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiClient } from "../api/client";
+import { toast } from "sonner";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -8,90 +10,38 @@ import { Slider } from "../components/ui/slider";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
 
-const medicines = [
-  {
-    id: 1,
-    name: "Paracetamol 500mg",
-    category: "Pain Relief",
-    manufacturer: "PharmaCorp",
-    price: 8.99,
-    stock: "In Stock",
-    description: "Effective pain and fever relief",
-    image: "https://images.unsplash.com/photo-1646392206581-2527b1cae5cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWRpY2luZSUyMHBpbGxzJTIwdGFibGV0c3xlbnwxfHx8fDE3NzM3NjI4NDV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    rating: 4.5
-  },
-  {
-    id: 2,
-    name: "Amoxicillin 250mg",
-    category: "Antibiotics",
-    manufacturer: "MediHealth",
-    price: 15.99,
-    stock: "In Stock",
-    description: "Broad-spectrum antibiotic",
-    image: "https://images.unsplash.com/photo-1631669969504-f35518bf96ba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcmVzY3JpcHRpb24lMjBtZWRpY2F0aW9uJTIwYm90dGxlfGVufDF8fHx8MTc3Mzc2MTU2Mnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    rating: 4.7
-  },
-  {
-    id: 3,
-    name: "Vitamin D3 1000 IU",
-    category: "Vitamins",
-    manufacturer: "HealthPlus",
-    price: 12.50,
-    stock: "In Stock",
-    description: "Essential vitamin supplement",
-    image: "https://images.unsplash.com/photo-1768403305881-a7a82fd63512?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aXRhbWluJTIwc3VwcGxlbWVudHMlMjBjYXBzdWxlc3xlbnwxfHx8fDE3NzM3ODAyNDF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    rating: 4.3
-  },
-  {
-    id: 4,
-    name: "Ibuprofen 400mg",
-    category: "Pain Relief",
-    manufacturer: "CarePharm",
-    price: 10.99,
-    stock: "In Stock",
-    description: "Anti-inflammatory pain reliever",
-    image: "https://images.unsplash.com/photo-1646392206581-2527b1cae5cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWRpY2luZSUyMHBpbGxzJTIwdGFibGV0c3xlbnwxfHx8fDE3NzM3NjI4NDV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    rating: 4.6
-  },
-  {
-    id: 5,
-    name: "Cetirizine 10mg",
-    category: "Allergy",
-    manufacturer: "AllerCare",
-    price: 9.99,
-    stock: "Low Stock",
-    description: "Allergy and hay fever relief",
-    image: "https://images.unsplash.com/photo-1631669969504-f35518bf96ba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcmVzY3JpcHRpb24lMjBtZWRpY2F0aW9uJTIwYm90dGxlfGVufDF8fHx8MTc3Mzc2MTU2Mnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    rating: 4.4
-  },
-  {
-    id: 6,
-    name: "Omega-3 Fish Oil",
-    category: "Vitamins",
-    manufacturer: "WellnessLab",
-    price: 18.99,
-    stock: "In Stock",
-    description: "Heart and brain health support",
-    image: "https://images.unsplash.com/photo-1768403305881-a7a82fd63512?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aXRhbWluJTIwc3VwcGxlbWVudHMlMjBjYXBzdWxlc3xlbnwxfHx8fDE3NzM3ODAyNDF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    rating: 4.8
-  },
-];
-
 const categories = ["All", "Pain Relief", "Antibiotics", "Vitamins", "Allergy"];
 
 export function MedicinesPage() {
+  const [medicines, setMedicines] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 50]);
+  const [priceRange, setPriceRange] = useState([0, 100]);
   const [inStockOnly, setInStockOnly] = useState(false);
+
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      try {
+        const data = await apiClient("/medicines");
+        setMedicines(data);
+      } catch (error: any) {
+        toast.error("Failed to load medicines");
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMedicines();
+  }, []);
 
   const filteredMedicines = medicines.filter((medicine) => {
     const matchesSearch = medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         medicine.manufacturer.toLowerCase().includes(searchQuery.toLowerCase());
+                         (medicine.manufacturer && medicine.manufacturer.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = selectedCategory === "All" || medicine.category === selectedCategory;
     const matchesPrice = medicine.price >= priceRange[0] && medicine.price <= priceRange[1];
-    const matchesStock = !inStockOnly || medicine.stock === "In Stock";
+    const matchesStock = !inStockOnly || medicine.stock >= 1; // Assuming stock is a number in backend
     
     return matchesSearch && matchesCategory && matchesPrice && matchesStock;
   });

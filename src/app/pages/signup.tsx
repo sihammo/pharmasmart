@@ -6,6 +6,9 @@ import { Label } from "../components/ui/label";
 import { Card } from "../components/ui/card";
 import { Package } from "lucide-react";
 
+import { apiClient } from "../api/client";
+import { toast } from "sonner";
+
 export function SignupPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -14,11 +17,37 @@ export function SignupPage() {
     password: "",
     confirmPassword: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock signup - in real app would create account
-    navigate("/dashboard");
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const data = await apiClient("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: "USER" // Default role
+        }),
+      });
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data));
+      toast.success("Account created successfully!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

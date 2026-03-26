@@ -6,15 +6,39 @@ import { Label } from "../components/ui/label";
 import { Card } from "../components/ui/card";
 import { Package } from "lucide-react";
 
+import { apiClient } from "../api/client";
+import { toast } from "sonner";
+
 export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login - in real app would validate credentials
-    navigate("/dashboard");
+    setIsLoading(true);
+
+    try {
+      const data = await apiClient("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data));
+      toast.success("Logged in successfully!");
+      
+      if (data.role === "ADMIN") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

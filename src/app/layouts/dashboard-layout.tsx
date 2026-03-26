@@ -1,12 +1,21 @@
-import { Outlet, Link, useLocation } from "react-router";
-import { Package, Home, MapPin, Pill, Heart, ShoppingCart, User, Search, Bell, Menu, X } from "lucide-react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
+import { Package, Home, MapPin, Pill, Heart, ShoppingCart, User, Search, Bell, Menu, X, LogOut } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function DashboardLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    toast.info("Logged out successfully");
+    navigate("/login");
+  };
 
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Home" },
@@ -17,6 +26,11 @@ export function DashboardLayout() {
     { path: "/dashboard/account", icon: User, label: "Account" },
     { path: "/dashboard/profile", icon: User, label: "Settings" },
   ];
+
+// ... (active logic)
+
+// ... inside the nav Loop:
+// I'll just add it after the map.
 
   const isActive = (path: string) => {
     if (path === "/dashboard") {
@@ -98,6 +112,15 @@ export function DashboardLayout() {
                 </Link>
               );
             })}
+            <div className="pt-4 mt-4 border-t border-[#8FB9B0]">
+              <div
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-700 hover:bg-[#8FB9B0] cursor-pointer"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="text-lg">Logout</span>
+              </div>
+            </div>
           </nav>
         </aside>
 
@@ -146,6 +169,18 @@ export function DashboardLayout() {
                       </Link>
                     );
                   })}
+                  <div className="pt-4 mt-4 border-t border-[#8FB9B0]">
+                    <div
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-700 hover:bg-[#8FB9B0] cursor-pointer"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span className="text-lg">Logout</span>
+                    </div>
+                  </div>
                 </nav>
               </div>
             </aside>

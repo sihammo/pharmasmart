@@ -1,89 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiClient } from "../api/client";
+import { toast } from "sonner";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { MapPin, Navigation, Phone, Clock, Search, Map } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
-const pharmacies = [
-  {
-    id: 1,
-    name: "HealthPlus Pharmacy",
-    address: "123 Main Street, Downtown",
-    distance: "0.5 km",
-    status: "Open",
-    closingTime: "Closes at 10:00 PM",
-    phone: "+1 (555) 123-4567",
-    lat: 40.7128,
-    lng: -74.0060,
-    image: "https://images.unsplash.com/photo-1771315763139-629702d6c49e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaGFybWFjeSUyMHN0b3JlZnJvbnQlMjBidWlsZGluZ3xlbnwxfHx8fDE3NzM3ODAxMzl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-  },
-  {
-    id: 2,
-    name: "MediCare Central",
-    address: "456 Oak Avenue, Midtown",
-    distance: "1.2 km",
-    status: "Open",
-    closingTime: "Closes at 11:00 PM",
-    phone: "+1 (555) 234-5678",
-    lat: 40.7580,
-    lng: -73.9855,
-    image: "https://images.unsplash.com/photo-1666886573452-9dc8ce8f5cc5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGhjYXJlJTIwbWVkaWNhbCUyMHByb2Zlc3Npb25hbHxlbnwxfHx8fDE3NzM2OTMyNDN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-  },
-  {
-    id: 3,
-    name: "Quick Meds Pharmacy",
-    address: "789 Elm Street, Westside",
-    distance: "2.1 km",
-    status: "Open 24/7",
-    closingTime: "Open 24 hours",
-    phone: "+1 (555) 345-6789",
-    lat: 40.7489,
-    lng: -73.9680,
-    image: "https://images.unsplash.com/photo-1671108503276-1d3d5ab23a3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBwaGFybWFjeSUyMG1lZGljaW5lc3xlbnwxfHx8fDE3NzM3ODAwNDl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-  },
-  {
-    id: 4,
-    name: "City Health Pharmacy",
-    address: "321 Park Lane, Eastside",
-    distance: "3.5 km",
-    status: "Open",
-    closingTime: "Closes at 9:00 PM",
-    phone: "+1 (555) 456-7890",
-    lat: 40.7614,
-    lng: -73.9776,
-    image: "https://images.unsplash.com/photo-1635367216109-aa3353c0c22e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGglMjB3ZWxsbmVzcyUyMGNhcmV8ZW58MXx8fHwxNzczNzgwMDQ5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-  },
-  {
-    id: 5,
-    name: "Wellness Express",
-    address: "654 Broadway, Uptown",
-    distance: "4.2 km",
-    status: "Open",
-    closingTime: "Closes at 8:00 PM",
-    phone: "+1 (555) 567-8901",
-    lat: 40.7831,
-    lng: -73.9712,
-    image: "https://images.unsplash.com/photo-1646392206581-2527b1cae5cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWRpY2F0aW9uJTIwcGlsbHMlMjBwcmVzY3JpcHRpb258ZW58MXx8fHwxNzczNzgwMDQ5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-  },
-  {
-    id: 6,
-    name: "Care Pharmacy Plus",
-    address: "987 Fifth Avenue, Central",
-    distance: "5.0 km",
-    status: "Closed",
-    closingTime: "Opens tomorrow at 8:00 AM",
-    phone: "+1 (555) 678-9012",
-    lat: 40.7505,
-    lng: -73.9934,
-    image: "https://images.unsplash.com/photo-1671108503276-1d3d5ab23a3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBwaGFybWFjeSUyMG1lZGljaW5lc3xlbnwxfHx8fDE3NzM3ODAwNDl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-  },
-];
-
 export function PharmaciesPage() {
+  const [pharmacies, setPharmacies] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPharmacy, setSelectedPharmacy] = useState<number | null>(null);
+  const [selectedPharmacy, setSelectedPharmacy] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+      try {
+        const data = await apiClient("/pharmacies");
+        setPharmacies(data);
+      } catch (error: any) {
+        toast.error("Failed to load pharmacies");
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPharmacies();
+  }, []);
 
   const filteredPharmacies = pharmacies.filter((pharmacy) =>
     pharmacy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

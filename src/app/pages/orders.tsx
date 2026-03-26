@@ -1,67 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
 import { ShoppingCart, Trash2, Plus, Minus, Package, CheckCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-
-const mockCartItems = [
-  {
-    id: 1,
-    name: "Paracetamol 500mg",
-    price: 8.99,
-    quantity: 2,
-    image: "💊"
-  },
-  {
-    id: 2,
-    name: "Vitamin D3 1000 IU",
-    price: 12.50,
-    quantity: 1,
-    image: "💊"
-  },
-  {
-    id: 3,
-    name: "Diabetes Care Pack",
-    price: 89.99,
-    quantity: 1,
-    image: "📦"
-  },
-];
-
-const mockOrders = [
-  {
-    id: "ORD-2026-001",
-    date: "March 15, 2026",
-    status: "Delivered",
-    total: 67.48,
-    items: 3,
-  },
-  {
-    id: "ORD-2026-002",
-    date: "March 10, 2026",
-    status: "In Transit",
-    total: 89.99,
-    items: 1,
-  },
-  {
-    id: "ORD-2026-003",
-    date: "March 5, 2026",
-    status: "Delivered",
-    total: 145.50,
-    items: 5,
-  },
-  {
-    id: "ORD-2026-004",
-    date: "February 28, 2026",
-    status: "Delivered",
-    total: 54.99,
-    items: 2,
-  },
-];
+import { apiClient } from "../api/client";
+import { toast } from "sonner";
 
 export function OrdersPage() {
-  const [cartItems, setCartItems] = useState(mockCartItems);
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = await apiClient("/orders");
+        setOrders(data);
+      } catch (error: any) {
+        toast.error("Failed to load order history");
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   const updateQuantity = (id: number, change: number) => {
     setCartItems(items =>
@@ -214,42 +178,52 @@ export function OrdersPage() {
           )}
         </TabsContent>
 
-        {/* Order History */}
         <TabsContent value="history" className="space-y-4">
-          {mockOrders.map((order) => (
-            <Card key={order.id} className="p-6 rounded-2xl hover:shadow-lg transition-shadow">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-xl" style={{ color: '#0F766E' }}>{order.id}</h3>
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      order.status === "Delivered" 
-                        ? "bg-green-100 text-green-800" 
-                        : order.status === "In Transit"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
-                    }`}>
-                      {order.status === "Delivered" && <CheckCircle className="w-4 h-4 inline mr-1" />}
-                      {order.status}
-                    </span>
-                  </div>
-                  <p className="text-gray-600">
-                    Ordered on {order.date} • {order.items} item{order.items !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-2xl" style={{ color: '#0F766E' }}>${order.total.toFixed(2)}</span>
-                  <Button 
-                    variant="outline"
-                    className="border-2 rounded-lg"
-                    style={{ borderColor: '#0F766E', color: '#0F766E' }}
-                  >
-                    View Details
-                  </Button>
-                </div>
-              </div>
+          {orders.length === 0 ? (
+            <Card className="p-12 text-center rounded-2xl">
+              <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-2xl mb-2 text-gray-600">No order history</h3>
+              <p className="text-gray-500">Your past orders will appear here</p>
             </Card>
-          ))}
+          ) : (
+            orders.map((order) => (
+              <Card key={order._id} className="p-6 rounded-2xl hover:shadow-lg transition-shadow">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl" style={{ color: '#0F766E' }}>{order._id.slice(-8).toUpperCase()}</h3>
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        order.status === "DELIVERED" 
+                          ? "bg-green-100 text-green-800" 
+                          : order.status === "PENDING"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-blue-100 text-blue-800"
+                      }`}>
+                        {order.status === "DELIVERED" && <CheckCircle className="w-4 h-4 inline mr-1" />}
+                        {order.status}
+                      </span>
+                    </div>
+                    <p className="text-gray-600">
+                      Ordered on {new Date(order.createdAt).toLocaleDateString()} • {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Pharmacy: {order.pharmacyId?.name}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-2xl" style={{ color: '#0F766E' }}>${order.totalAmount.toFixed(2)}</span>
+                    <Button 
+                      variant="outline"
+                      className="border-2 rounded-lg"
+                      style={{ borderColor: '#0F766E', color: '#0F766E' }}
+                    >
+                      View Details
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
         </TabsContent>
       </Tabs>
     </div>
