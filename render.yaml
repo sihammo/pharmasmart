@@ -16,9 +16,8 @@ services:
         sync: false # Set this in Render dashboard
 
   # Frontend Static Site
-  - type: web
+  - type: static
     name: pharmasmart-frontend
-    env: static
     buildCommand: npm install && npm run build
     publishDir: dist
     envVars:
