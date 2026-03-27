@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { Badge } from "../components/ui/badge";
 import { MapPin, Navigation, Phone, Clock, Search, Map as MapIcon } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
