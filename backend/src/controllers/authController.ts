@@ -153,7 +153,18 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
       phone: user.phone || "",
       address: user.address || "",
       role: user.role,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
+      healthProfile: user.healthProfile || {
+        conditions: [],
+        allergies: [],
+        medications: [],
+        bloodType: "",
+        emergencyContact: {
+          name: "",
+          relationship: "",
+          phone: ""
+        }
+      }
     });
   } else {
     res.status(404).json({ message: "User not found" });
@@ -169,6 +180,17 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
       user.email = req.body.email || user.email;
       user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
       user.address = req.body.address !== undefined ? req.body.address : user.address;
+      
+      if (req.body.healthProfile) {
+        user.healthProfile = {
+          ...user.healthProfile,
+          ...req.body.healthProfile,
+          emergencyContact: {
+            ...(user.healthProfile?.emergencyContact || {}),
+            ...(req.body.healthProfile.emergencyContact || {})
+          }
+        };
+      }
 
       if (req.body.password) {
         const salt = await bcrypt.genSalt(10);
@@ -184,6 +206,7 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
         phone: updatedUser.phone,
         address: updatedUser.address,
         role: updatedUser.role,
+        healthProfile: updatedUser.healthProfile,
         token: generateToken(updatedUser.id, updatedUser.role),
       });
     } else {

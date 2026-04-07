@@ -1,288 +1,431 @@
+import { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
-import { User, Mail, Phone, MapPin, Calendar, CreditCard, Package, Heart, Shield, Edit } from "lucide-react";
+import { 
+  User, Mail, Phone, MapPin, Calendar, CreditCard, 
+  Package, Heart, Shield, Edit, Save, X, Plus, Trash2,
+  Clock, Star, ExternalLink
+} from "lucide-react";
+import { apiClient } from "../api/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { toast } from "sonner";
 
-const userInfo = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  phone: "+1 (555) 123-4567",
-  address: "123 Main Street, Apt 4B, New York, NY 10001",
-  memberSince: "March 2026",
-  totalOrders: 12,
-  totalSpent: "$1,245.80",
-  savedPharmacies: 3,
-  activeSubscriptions: 2
-};
+interface HealthProfile {
+  conditions: string[];
+  allergies: string[];
+  medications: string[];
+  bloodType: string;
+  emergencyContact: {
+    name: string;
+    relationship: string;
+    phone: string;
+  };
+}
+
+interface UserData {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
+  createdAt: string;
+  healthProfile: HealthProfile;
+}
 
 const recentOrders = [
   { id: "ORD-2026-001", date: "March 15, 2026", status: "Delivered", total: 67.48, items: ["Paracetamol 500mg", "Vitamin D3"] },
   { id: "ORD-2026-002", date: "March 10, 2026", status: "Delivered", total: 89.99, items: ["Diabetes Care Pack"] },
-  { id: "ORD-2026-003", date: "March 5, 2026", status: "Delivered", total: 145.50, items: ["Amoxicillin 250mg", "Ibuprofen 400mg", "Omega-3"] },
 ];
-
-const subscriptions = [
-  { name: "Diabetes Care Pack", nextDelivery: "March 25, 2026", price: "$89.99/month", status: "Active" },
-  { name: "Blood Pressure Pack", nextDelivery: "March 28, 2026", price: "$54.99/month", status: "Active" },
-];
-
-const savedPharmacies = [
-  { name: "HealthPlus Pharmacy", distance: "0.5 km", rating: 4.8 },
-  { name: "MediCare Central", distance: "1.2 km", rating: 4.6 },
-  { name: "Quick Meds Pharmacy", distance: "2.1 km", rating: 4.9 },
-];
-
-const healthProfile = {
-  conditions: ["Type 2 Diabetes", "Hypertension"],
-  allergies: ["Penicillin"],
-  medications: ["Metformin 500mg", "Amlodipine 5mg"],
-  bloodType: "A+",
-  emergencyContact: {
-    name: "Jane Doe",
-    relationship: "Spouse",
-    phone: "+1 (555) 987-6543"
-  }
-};
 
 export function AccountPage() {
+  const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingHealth, setIsEditingHealth] = useState(false);
+
+  const [profileForm, setProfileForm] = useState({ name: "", phone: "", address: "" });
+  const [healthForm, setHealthForm] = useState<HealthProfile | null>(null);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const data = await apiClient("/auth/profile");
+      setUser(data);
+      setProfileForm({
+        name: data.name,
+        phone: data.phone || "",
+        address: data.address || ""
+      });
+      setHealthForm(data.healthProfile || {
+        conditions: [],
+        allergies: [],
+        medications: [],
+        bloodType: "",
+        emergencyContact: { name: "", relationship: "", phone: "" }
+      });
+    } catch (error: any) {
+      toast.error("Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      const updated = await apiClient("/auth/profile", {
+        method: "PUT",
+        body: JSON.stringify(profileForm)
+      });
+      setUser({ ...user!, ...updated });
+      setIsEditingProfile(false);
+      toast.success("Profile updated successfully");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleUpdateHealth = async () => {
+    try {
+      const updated = await apiClient("/auth/profile", {
+        method: "PUT",
+        body: JSON.stringify({ healthProfile: healthForm })
+      });
+      setUser({ ...user!, healthProfile: updated.healthProfile });
+      setIsEditingHealth(false);
+      toast.success("Health profile updated successfully");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  if (loading) return <div className="flex justify-center items-center min-h-[60vh] text-[#0F766E] font-medium">Loading your profile...</div>;
+  if (!user) return <div className="text-center p-12 text-red-600">User not found. Please log in again.</div>;
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-4xl mb-2" style={{ color: '#0F766E' }}>My Account</h1>
-        <p className="text-xl text-gray-600">Manage your personal information and health profile</p>
+    <div className="max-w-7xl mx-auto space-y-8 pb-12">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-bold mb-2" style={{ color: '#0F766E' }}>Account Settings</h1>
+          <p className="text-xl text-gray-500">Manage your personal information, security, and health records.</p>
+        </div>
       </div>
 
-      {/* Profile Overview */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <Card className="p-8 rounded-2xl lg:col-span-1">
-          <div className="text-center space-y-4">
-            <div className="w-24 h-24 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
-              <User className="w-12 h-12 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl mb-1" style={{ color: '#0F766E' }}>{userInfo.name}</h2>
-              <p className="text-gray-600">Premium Member</p>
-            </div>
-            <Separator />
-            <div className="space-y-3 text-left">
-              <div className="flex items-center gap-3 text-gray-600">
-                <Mail className="w-4 h-4" />
-                <span className="text-sm">{userInfo.email}</span>
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 flex flex-col gap-8">
+          <Card className="p-8 rounded-[2rem] border-none shadow-xl shadow-teal-900/5 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#F0FDFA] rounded-full -mr-16 -mt-16 z-0" />
+            <div className="relative z-10 text-center space-y-6">
+              <div className="w-28 h-28 rounded-3xl mx-auto flex items-center justify-center shadow-lg transform -rotate-3" style={{ backgroundColor: '#0F766E' }}>
+                <User className="w-14 h-14 text-white" />
               </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <Phone className="w-4 h-4" />
-                <span className="text-sm">{userInfo.phone}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm">{userInfo.address}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <Calendar className="w-4 h-4" />
-                <span className="text-sm">Member since {userInfo.memberSince}</span>
-              </div>
-            </div>
-            <Button 
-              className="w-full bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Profile
-            </Button>
-          </div>
-        </Card>
-
-        {/* Stats and Quick Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Stats Grid */}
-          <div className="grid sm:grid-cols-2 gap-6">
-            <Card className="p-6 rounded-2xl">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#5FA79A' }}>
-                  <Package className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-gray-600">Total Orders</p>
-              </div>
-              <p className="text-3xl" style={{ color: '#0F766E' }}>{userInfo.totalOrders}</p>
-            </Card>
-
-            <Card className="p-6 rounded-2xl">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#2F8F7E' }}>
-                  <CreditCard className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-gray-600">Total Spent</p>
-              </div>
-              <p className="text-3xl" style={{ color: '#0F766E' }}>{userInfo.totalSpent}</p>
-            </Card>
-
-            <Card className="p-6 rounded-2xl">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
-                  <MapPin className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-gray-600">Saved Pharmacies</p>
-              </div>
-              <p className="text-3xl" style={{ color: '#0F766E' }}>{userInfo.savedPharmacies}</p>
-            </Card>
-
-            <Card className="p-6 rounded-2xl">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#5FA79A' }}>
-                  <Heart className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-gray-600">Active Subscriptions</p>
-              </div>
-              <p className="text-3xl" style={{ color: '#0F766E' }}>{userInfo.activeSubscriptions}</p>
-            </Card>
-          </div>
-
-          {/* Health Profile */}
-          <Card className="p-8 rounded-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
-                  <Heart className="w-5 h-5 text-white" />
-                </div>
-                <h2 className="text-2xl" style={{ color: '#0F766E' }}>Health Profile</h2>
-              </div>
-              <Button variant="outline" className="border-2 rounded-lg" style={{ borderColor: '#0F766E', color: '#0F766E' }}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-6">
               <div>
-                <p className="text-sm text-gray-500 mb-2">Medical Conditions</p>
-                <div className="space-y-1">
-                  {healthProfile.conditions.map((condition, i) => (
-                    <p key={i} className="px-3 py-1 rounded-lg inline-block mr-2" style={{ backgroundColor: '#B7D1CC', color: '#0F766E' }}>
-                      {condition}
-                    </p>
-                  ))}
+                <h2 className="text-2xl font-bold mb-1" style={{ color: '#0F766E' }}>{user.name}</h2>
+                <span className="px-3 py-1 bg-teal-50 text-[#0F766E] text-xs font-bold rounded-full uppercase tracking-wider">
+                  {user.role.replace('_', ' ')}
+                </span>
+              </div>
+              <Separator className="bg-gray-100" />
+              <div className="space-y-4 text-left">
+                <div className="flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Email Address</p>
+                    <p className="text-sm font-medium text-gray-700 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
+                    <Phone className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Phone Number</p>
+                    <p className="text-sm font-medium text-gray-700">{user.phone || "Not set"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Primary Address</p>
+                    <p className="text-sm font-medium text-gray-700 truncate">{user.address || "Not set"}</p>
+                  </div>
                 </div>
               </div>
-
-              <div>
-                <p className="text-sm text-gray-500 mb-2">Allergies</p>
-                <div className="space-y-1">
-                  {healthProfile.allergies.map((allergy, i) => (
-                    <p key={i} className="px-3 py-1 bg-red-100 text-red-800 rounded-lg inline-block mr-2">
-                      {allergy}
-                    </p>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-500 mb-2">Current Medications</p>
-                <ul className="space-y-1">
-                  {healthProfile.medications.map((med, i) => (
-                    <li key={i} className="text-gray-700">• {med}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-500 mb-2">Blood Type</p>
-                <p className="text-2xl" style={{ color: '#0F766E' }}>{healthProfile.bloodType}</p>
-              </div>
+              <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile}>
+                <DialogTrigger asChild>
+                  <Button className="w-full py-6 bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-2xl shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02]">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Profile Details
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-white rounded-3xl sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold text-[#0F766E]">Update Personal Info</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-6 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="name" className="text-gray-500">Full Name</Label>
+                      <Input id="name" value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} className="rounded-xl" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="phone" className="text-gray-500">Phone</Label>
+                      <Input id="phone" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} className="rounded-xl" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="address" className="text-gray-500">Address</Label>
+                      <Input id="address" value={profileForm.address} onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })} className="rounded-xl" />
+                    </div>
+                  </div>
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="ghost" onClick={() => setIsEditingProfile(false)} className="rounded-xl">Discard</Button>
+                    <Button onClick={handleUpdateProfile} style={{ backgroundColor: '#0F766E' }} className="text-white rounded-xl px-8">Save Profile</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
+          </Card>
+        </div>
 
-            <Separator className="my-6" />
-
-            <div>
-              <p className="text-sm text-gray-500 mb-3">Emergency Contact</p>
-              <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: '#B7D1CC' }}>
-                <Shield className="w-6 h-6" style={{ color: '#0F766E' }} />
+        <div className="lg:col-span-2 flex flex-col gap-8">
+          <Card className="p-8 rounded-[2rem] border-none shadow-xl shadow-teal-900/5 bg-white relative">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white" style={{ backgroundColor: '#0F766E' }}>
+                  <Heart className="w-6 h-6" />
+                </div>
                 <div>
-                  <p style={{ color: '#0F766E' }}>{healthProfile.emergencyContact.name}</p>
-                  <p className="text-sm text-gray-600">{healthProfile.emergencyContact.relationship} • {healthProfile.emergencyContact.phone}</p>
+                  <h2 className="text-2xl font-bold text-[#0F766E]">Health Profile</h2>
+                  <p className="text-sm text-gray-400">Keep your records updated for better care.</p>
                 </div>
               </div>
+              <Dialog open={isEditingHealth} onOpenChange={setIsEditingHealth}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="rounded-xl border-2 px-6 font-bold" style={{ borderColor: '#0F766E', color: '#0F766E' }}>
+                    Edit Info
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl bg-white rounded-3xl overflow-y-auto max-h-[90vh]">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold text-[#0F766E]">Update Health Profile</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid md:grid-cols-2 gap-6 py-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="font-bold text-gray-600">Medical Conditions</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {healthForm?.conditions.map((c, i) => (
+                            <span key={i} className="flex items-center gap-1 px-3 py-1 bg-teal-50 text-[#0F766E] rounded-full text-xs font-medium border border-teal-100">
+                              {c}
+                              <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => {
+                                const next = [...healthForm.conditions];
+                                next.splice(i, 1);
+                                setHealthForm({ ...healthForm, conditions: next });
+                              }} />
+                            </span>
+                          ))}
+                        </div>
+                        <Input id="new-condition" placeholder="Add condition..." className="rounded-xl" onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = (e.target as HTMLInputElement).value;
+                            if (val) {
+                              setHealthForm({ ...healthForm!, conditions: [...healthForm!.conditions, val] });
+                              (e.target as HTMLInputElement).value = "";
+                            }
+                          }
+                        }} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="font-bold text-gray-600">Allergies</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {healthForm?.allergies.map((a, i) => (
+                            <span key={i} className="flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-medium border border-red-100">
+                              {a}
+                              <X className="w-3 h-3 cursor-pointer hover:text-red-800" onClick={() => {
+                                const next = [...healthForm.allergies];
+                                next.splice(i, 1);
+                                setHealthForm({ ...healthForm, allergies: next });
+                              }} />
+                            </span>
+                          ))}
+                        </div>
+                        <Input id="new-allergy" placeholder="Add allergy..." className="rounded-xl" onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = (e.target as HTMLInputElement).value;
+                            if (val) {
+                              setHealthForm({ ...healthForm!, allergies: [...healthForm!.allergies, val] });
+                              (e.target as HTMLInputElement).value = "";
+                            }
+                          }
+                        }} />
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="font-bold text-gray-600">Current Medications</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {healthForm?.medications.map((m, i) => (
+                            <span key={i} className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium border border-blue-100">
+                              {m}
+                              <X className="w-3 h-3 cursor-pointer" onClick={() => {
+                                const next = [...healthForm.medications];
+                                next.splice(i, 1);
+                                setHealthForm({ ...healthForm, medications: next });
+                              }} />
+                            </span>
+                          ))}
+                        </div>
+                        <Input id="new-med" placeholder="Add medication..." className="rounded-xl" onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = (e.target as HTMLInputElement).value;
+                            if (val) {
+                              setHealthForm({ ...healthForm!, medications: [...healthForm!.medications, val] });
+                              (e.target as HTMLInputElement).value = "";
+                            }
+                          }
+                        }} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="font-bold text-gray-600">Blood Type</Label>
+                        <select 
+                          className="w-full h-10 px-3 rounded-xl border border-input bg-background"
+                          value={healthForm?.bloodType || ""}
+                          onChange={(e) => setHealthForm({...healthForm!, bloodType: e.target.value})}
+                        >
+                          <option value="">Select Blood Type</option>
+                          {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(v => (
+                            <option key={v} value={v}>{v}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="col-span-full pt-4 border-t">
+                      <p className="font-bold text-gray-800 mb-4">Emergency Contact</p>
+                      <div className="grid sm:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Name</Label>
+                          <Input value={healthForm?.emergencyContact.name || ""} onChange={(e) => setHealthForm({...healthForm!, emergencyContact: {...healthForm!.emergencyContact, name: e.target.value}})} className="rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Relationship</Label>
+                          <Input value={healthForm?.emergencyContact.relationship || ""} onChange={(e) => setHealthForm({...healthForm!, emergencyContact: {...healthForm!.emergencyContact, relationship: e.target.value}})} className="rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Phone</Label>
+                          <Input value={healthForm?.emergencyContact.phone || ""} onChange={(e) => setHealthForm({...healthForm!, emergencyContact: {...healthForm!.emergencyContact, phone: e.target.value}})} className="rounded-xl" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter className="mt-6">
+                    <Button variant="ghost" onClick={() => setIsEditingHealth(false)} className="rounded-xl">Cancel</Button>
+                    <Button onClick={handleUpdateHealth} style={{ backgroundColor: '#0F766E' }} className="text-white rounded-xl px-10">Record Updates</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
+              <div className="space-y-3">
+                <p className="text-[10px] tracking-widest uppercase font-bold text-gray-400">Medical History</p>
+                <div className="flex flex-wrap gap-2">
+                  {user.healthProfile.conditions.length > 0 ? user.healthProfile.conditions.map((c, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-[#F0FDFA] text-[#0F766E] rounded-xl text-sm font-semibold border border-teal-100">
+                      {c}
+                    </span>
+                  )) : <p className="text-sm text-gray-400 italic">No conditions recorded</p>}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <p className="text-[10px] tracking-widest uppercase font-bold text-gray-400">Allergies</p>
+                <div className="flex flex-wrap gap-2">
+                  {user.healthProfile.allergies.length > 0 ? user.healthProfile.allergies.map((a, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-red-50 text-red-600 rounded-xl text-sm font-semibold border border-red-100">
+                      {a}
+                    </span>
+                  )) : <p className="text-sm text-gray-400 italic">No allergies recorded</p>}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <p className="text-[10px] tracking-widest uppercase font-bold text-gray-400">Medications</p>
+                <div className="flex flex-col gap-2">
+                  {user.healthProfile.medications.length > 0 ? user.healthProfile.medications.map((m, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm font-medium text-gray-700">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                      {m}
+                    </div>
+                  )) : <p className="text-sm text-gray-400 italic">No medications recorded</p>}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <p className="text-[10px] tracking-widest uppercase font-bold text-gray-400">Biological Markers</p>
+                <div className="flex items-baseline gap-2">
+                   <span className="text-3xl font-bold text-[#0F766E]">{user.healthProfile.bloodType || "N/A"}</span>
+                   <span className="text-sm font-bold text-gray-400 uppercase">Blood Group</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-10 p-5 rounded-2xl bg-teal-50/50 border border-teal-100/50">
+              <p className="text-[10px] tracking-widest uppercase font-bold text-[#0F766E] mb-4 flex items-center gap-2">
+                <Shield className="w-3 h-3" />
+                Emergency Response
+              </p>
+              {user.healthProfile.emergencyContact.name ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-gray-800 text-lg">{user.healthProfile.emergencyContact.name}</p>
+                    <p className="text-sm text-teal-700">{user.healthProfile.emergencyContact.relationship}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-mono font-bold text-[#0F766E]">{user.healthProfile.emergencyContact.phone}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">Primary Contact</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 italic">Please add an emergency contact for your safety.</p>
+              )}
+            </div>
+          </Card>
+          <Card className="p-8 rounded-[2rem] border-none shadow-xl shadow-teal-900/5 bg-white">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-[#0F766E]">Recent Activity</h2>
+              <Button variant="ghost" className="text-[#0F766E] font-bold">View History</Button>
+            </div>
+            <div className="space-y-4">
+              {recentOrders.map((order) => (
+                <div key={order.id} className="group flex items-center justify-between p-5 rounded-3xl hover:bg-[#F0FDFA] transition-all border border-gray-100/50 cursor-pointer">
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:bg-[#0F766E] transition-colors">
+                      <Clock className="w-6 h-6 text-[#0F766E] group-hover:text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <p className="font-bold text-gray-800">{order.id}</p>
+                        <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-full uppercase tracking-widest">
+                          {order.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 font-medium">{order.date} • {order.items.join(", ")}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-[#0F766E]">${order.total.toFixed(2)}</p>
+                    <ExternalLink className="w-4 h-4 ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              ))}
             </div>
           </Card>
         </div>
       </div>
-
-      {/* Recent Orders */}
-      <Card className="p-8 rounded-2xl">
-        <h2 className="text-2xl mb-6" style={{ color: '#0F766E' }}>Recent Orders</h2>
-        <div className="space-y-4">
-          {recentOrders.map((order) => (
-            <div key={order.id} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <p style={{ color: '#0F766E' }}>{order.id}</p>
-                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                    {order.status}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 mb-1">{order.date}</p>
-                <p className="text-sm text-gray-500">{order.items.join(", ")}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl mb-2" style={{ color: '#0F766E' }}>${order.total.toFixed(2)}</p>
-                <Button variant="outline" size="sm" className="border-2 rounded-lg" style={{ borderColor: '#0F766E', color: '#0F766E' }}>
-                  View Details
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Active Subscriptions */}
-      <Card className="p-8 rounded-2xl">
-        <h2 className="text-2xl mb-6" style={{ color: '#0F766E' }}>Active Subscriptions</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {subscriptions.map((sub, i) => (
-            <div key={i} className="p-6 rounded-xl border-2" style={{ borderColor: '#5FA79A', backgroundColor: '#B7D1CC' }}>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-xl mb-1" style={{ color: '#0F766E' }}>{sub.name}</h3>
-                  <p className="text-sm text-gray-600">Next delivery: {sub.nextDelivery}</p>
-                </div>
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                  {sub.status}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-xl" style={{ color: '#0F766E' }}>{sub.price}</p>
-                <div className="space-x-2">
-                  <Button variant="outline" size="sm" className="border-2 rounded-lg" style={{ borderColor: '#0F766E', color: '#0F766E' }}>
-                    Manage
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Saved Pharmacies */}
-      <Card className="p-8 rounded-2xl">
-        <h2 className="text-2xl mb-6" style={{ color: '#0F766E' }}>Saved Pharmacies</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          {savedPharmacies.map((pharmacy, i) => (
-            <div key={i} className="p-6 rounded-xl border-2 hover:shadow-lg transition-shadow" style={{ borderColor: '#B7D1CC' }}>
-              <h3 className="text-lg mb-2" style={{ color: '#0F766E' }}>{pharmacy.name}</h3>
-              <p className="text-sm text-gray-600 mb-2">{pharmacy.distance} away</p>
-              <div className="flex items-center gap-1 text-yellow-500 mb-4">
-                {Array.from({ length: 5 }).map((_, j) => (
-                  <span key={j}>{j < Math.floor(pharmacy.rating) ? '★' : '☆'}</span>
-                ))}
-                <span className="text-gray-600 text-sm ml-1">({pharmacy.rating})</span>
-              </div>
-              <Button variant="outline" size="sm" className="w-full border-2 rounded-lg" style={{ borderColor: '#0F766E', color: '#0F766E' }}>
-                View Pharmacy
-              </Button>
-            </div>
-          ))}
-        </div>
-      </Card>
     </div>
   );
 }

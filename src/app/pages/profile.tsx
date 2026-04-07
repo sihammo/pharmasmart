@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Separator } from "../components/ui/separator";
-import { User, Mail, Phone, MapPin, Calendar, Shield, Bell, CreditCard, LogOut } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, Shield, Bell, CreditCard, LogOut, Heart, Plus, Trash2, Activity, Pill } from "lucide-react";
 import { Switch } from "../components/ui/switch";
 import { apiClient } from "../api/client";
 import { toast } from "sonner";
@@ -18,6 +18,17 @@ export function ProfilePage() {
     phone: "",
     address: "",
     createdAt: "",
+    healthProfile: {
+      conditions: [] as string[],
+      allergies: [] as string[],
+      medications: [] as string[],
+      bloodType: "",
+      emergencyContact: {
+        name: "",
+        relationship: "",
+        phone: ""
+      }
+    }
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -32,6 +43,13 @@ export function ProfilePage() {
           phone: data.phone || "",
           address: data.address || "",
           createdAt: data.createdAt || "",
+          healthProfile: data.healthProfile || {
+            conditions: [],
+            allergies: [],
+            medications: [],
+            bloodType: "",
+            emergencyContact: { name: "", relationship: "", phone: "" }
+          }
         });
       } catch (error: any) {
         toast.error("Failed to load profile data");
@@ -194,6 +212,210 @@ export function ProfilePage() {
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </form>
+          </Card>
+
+          {/* Health Profile */}
+          <Card className="p-8 rounded-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
+                <Heart className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-2xl" style={{ color: '#0F766E' }}>Health Profile</h2>
+            </div>
+
+            <div className="space-y-8">
+              {/* Blood Type */}
+              <div className="space-y-2">
+                <Label htmlFor="bloodType">Blood Type</Label>
+                <Input
+                  id="bloodType"
+                  value={profile.healthProfile.bloodType}
+                  onChange={(e) => setProfile({
+                    ...profile,
+                    healthProfile: { ...profile.healthProfile, bloodType: e.target.value }
+                  })}
+                  placeholder="e.g. A+"
+                  className="h-12 text-lg border-2 focus:border-[#0F766E] rounded-lg"
+                />
+              </div>
+
+              {/* Lists Section */}
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Conditions */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-red-500" />
+                      Conditions
+                    </Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0 text-[#0F766E]"
+                      onClick={() => {
+                        const val = prompt("Enter medical condition:");
+                        if (val) setProfile({
+                          ...profile,
+                          healthProfile: { ...profile.healthProfile, conditions: [...profile.healthProfile.conditions, val] }
+                        });
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {profile.healthProfile.conditions.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg group text-sm">
+                        <span>{item}</span>
+                        <Trash2 
+                          className="w-3 h-3 text-red-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity" 
+                          onClick={() => {
+                            const newList = [...profile.healthProfile.conditions];
+                            newList.splice(idx, 1);
+                            setProfile({ ...profile, healthProfile: { ...profile.healthProfile, conditions: newList } });
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Allergies */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-blue-500" />
+                      Allergies
+                    </Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0 text-[#0F766E]"
+                      onClick={() => {
+                        const val = prompt("Enter allergy:");
+                        if (val) setProfile({
+                          ...profile,
+                          healthProfile: { ...profile.healthProfile, allergies: [...profile.healthProfile.allergies, val] }
+                        });
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {profile.healthProfile.allergies.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg group text-sm">
+                        <span>{item}</span>
+                        <Trash2 
+                          className="w-3 h-3 text-red-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity" 
+                          onClick={() => {
+                            const newList = [...profile.healthProfile.allergies];
+                            newList.splice(idx, 1);
+                            setProfile({ ...profile, healthProfile: { ...profile.healthProfile, allergies: newList } });
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Medications */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <Pill className="w-4 h-4 text-green-500" />
+                      Medications
+                    </Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0 text-[#0F766E]"
+                      onClick={() => {
+                        const val = prompt("Enter medication:");
+                        if (val) setProfile({
+                          ...profile,
+                          healthProfile: { ...profile.healthProfile, medications: [...profile.healthProfile.medications, val] }
+                        });
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {profile.healthProfile.medications.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg group text-sm">
+                        <span>{item}</span>
+                        <Trash2 
+                          className="w-3 h-3 text-red-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity" 
+                          onClick={() => {
+                            const newList = [...profile.healthProfile.medications];
+                            newList.splice(idx, 1);
+                            setProfile({ ...profile, healthProfile: { ...profile.healthProfile, medications: newList } });
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Emergency Contact */}
+              <div className="space-y-6 pt-4 border-t">
+                <h4 className="text-lg font-bold text-gray-800">Emergency Contact</h4>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Contact Name</Label>
+                    <Input
+                      value={profile.healthProfile.emergencyContact.name}
+                      onChange={(e) => setProfile({
+                        ...profile,
+                        healthProfile: {
+                          ...profile.healthProfile,
+                          emergencyContact: { ...profile.healthProfile.emergencyContact, name: e.target.value }
+                        }
+                      })}
+                      className="border-2 rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Relationship</Label>
+                    <Input
+                      value={profile.healthProfile.emergencyContact.relationship}
+                      onChange={(e) => setProfile({
+                        ...profile,
+                        healthProfile: {
+                          ...profile.healthProfile,
+                          emergencyContact: { ...profile.healthProfile.emergencyContact, relationship: e.target.value }
+                        }
+                      })}
+                      className="border-2 rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone Number</Label>
+                    <Input
+                      value={profile.healthProfile.emergencyContact.phone}
+                      onChange={(e) => setProfile({
+                        ...profile,
+                        healthProfile: {
+                          ...profile.healthProfile,
+                          emergencyContact: { ...profile.healthProfile.emergencyContact, phone: e.target.value }
+                        }
+                      })}
+                      className="border-2 rounded-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleUpdateProfile} 
+                className="bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg px-8 h-12 w-full mt-4"
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving Health Profile..." : "Update Health Profile"}
+              </Button>
+            </div>
           </Card>
 
           {/* Notifications */}
