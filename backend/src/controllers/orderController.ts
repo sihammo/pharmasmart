@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Order from "../models/Order";
 import Medicine from "../models/Medicine";
+import Pharmacy from "../models/Pharmacy";
 
 export const createOrder = async (req: Request | any, res: Response) => {
   try {
@@ -72,10 +73,33 @@ export const getAllOrders = async (req: Request, res: Response) => {
   }
 };
 
-export const updateOrderStatus = async (req: Request, res: Response) => {
+export const getPharmacyOrders = async (req: Request | any, res: Response) => {
   try {
-    const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    const orders = await Order.find({ pharmacyId: req.params.pharmacyId })
+      .populate("userId", "name email phone")
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error: any) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const updateOrderStatus = async (req: Request | any, res: Response) => {
+  try {
+    const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
+
+    // Allow if ADMIN or if user is the PHARMACY_OWNER of this pharmacy
+    if (req.user.role !== "ADMIN") {
+      const pharmacy = await Pharmacy.findById(order.pharmacyId);
+      if (!pharmacy || pharmacy.ownerId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: "Not authorized to update this order" });
+      }
+    }
+
+    order.status = req.body.status;
+    await order.save();
+    
     res.json(order);
   } catch (error: any) {
     res.status(500).json({ message: "Update failed", error: error.message });

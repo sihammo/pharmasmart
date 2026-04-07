@@ -11,6 +11,10 @@ const pharmacySchema = new mongoose.Schema(
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number], index: "2dsphere" } // [longitude, latitude]
+    },
+    openingHours: {
+      open: { type: String, default: "08:00" },
+      close: { type: String, default: "22:00" }
     }
   },
   { timestamps: true }

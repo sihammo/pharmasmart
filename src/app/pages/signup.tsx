@@ -16,6 +16,7 @@ export function SignupPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "CUSTOMER",
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,7 +36,7 @@ export function SignupPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: "CUSTOMER" // Default role matches backend enum
+          role: formData.role
         }),
       });
 
@@ -105,8 +106,33 @@ export function SignupPage() {
             />
           </div>
 
+          <div className="flex bg-gray-100 p-1 rounded-xl mb-4 gap-1">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, role: "CUSTOMER" })}
+              className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
+                formData.role === "CUSTOMER" 
+                ? "bg-[#0F766E] text-white shadow-md" 
+                : "text-gray-500 hover:text-[#0F766E]"
+              }`}
+            >
+              Patient/Customer
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, role: "PHARMACY_OWNER" })}
+              className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
+                formData.role === "PHARMACY_OWNER" 
+                ? "bg-[#0F766E] text-white shadow-md" 
+                : "text-gray-500 hover:text-[#0F766E]"
+              }`}
+            >
+              Pharmacy Owner
+            </button>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-gray-700">Confirm Password</Label>
+            <Label htmlFor="confirmPassword" disabled={isLoading} className="text-gray-700">Confirm Password</Label>
             <Input
               id="confirmPassword"
               type="password"
