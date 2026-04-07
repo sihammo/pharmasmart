@@ -7,7 +7,7 @@ const pharmacySchema = new mongoose.Schema(
     address: { type: String, required: true },
     phone: { type: String, required: true },
     licenseNumber: { type: String, required: true },
-    isApproved: { type: Boolean, default: false },
+    isApproved: { type: Boolean, default: true },
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number], index: "2dsphere" } // [longitude, latitude]

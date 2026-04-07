@@ -3,7 +3,7 @@ import Pharmacy from "../models/Pharmacy";
 
 export const getPharmacies = async (req: Request, res: Response) => {
   try {
-    const pharmacies = await Pharmacy.find({ isApproved: true });
+    const pharmacies = await Pharmacy.find();
     res.json(pharmacies);
   } catch (error: any) {
     res.status(500).json({ message: "Server Error", error: error.message });

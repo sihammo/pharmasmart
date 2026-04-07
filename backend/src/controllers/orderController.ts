@@ -32,7 +32,7 @@ export const createOrder = async (req: Request | any, res: Response) => {
       items,
       totalAmount,
       prescriptionUrl,
-      status: "Pending"
+      status: "PENDING"
     });
 
     const createdOrder = await order.save();

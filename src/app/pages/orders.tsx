@@ -51,10 +51,11 @@ export function OrdersPage() {
       // Group items by pharmacyId
       const groupedByPharmacy: { [key: string]: any[] } = {};
       cartItems.forEach(item => {
-        if (!groupedByPharmacy[item.pharmacyId]) {
-          groupedByPharmacy[item.pharmacyId] = [];
+        const pId = typeof item.pharmacyId === 'object' ? item.pharmacyId._id : item.pharmacyId;
+        if (!groupedByPharmacy[pId]) {
+          groupedByPharmacy[pId] = [];
         }
-        groupedByPharmacy[item.pharmacyId].push(item);
+        groupedByPharmacy[pId].push(item);
       });
 
       // Create an order for each pharmacy
