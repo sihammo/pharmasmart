@@ -4,7 +4,7 @@ import Pharmacy from "../models/Pharmacy";
 
 export const getMedicines = async (req: Request, res: Response) => {
   try {
-    const medicines = await Medicine.find();
+    const medicines = await Medicine.find().populate("pharmacyId", "name address");
     res.json(medicines);
   } catch (error: any) {
     res.status(500).json({ message: "Server Error", error: error.message });
@@ -43,7 +43,7 @@ export const deleteMedicine = async (req: Request, res: Response) => {
 
 export const getMyMedicines = async (req: Request, res: Response) => {
   try {
-    const medicines = await Medicine.find({ pharmacyId: req.params.pharmacyId });
+    const medicines = await Medicine.find({ pharmacyId: req.params.pharmacyId }).populate("pharmacyId", "name");
     res.json(medicines);
   } catch (error: any) {
     res.status(500).json({ message: "Server Error", error: error.message });

@@ -32,26 +32,59 @@ export function OrdersPage() {
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
+    
+    // Check if any item requires a prescription
+    const requiresPrescription = cartItems.some(item => item.requiresPrescription);
+    if (requiresPrescription) {
+      toast.error("One or more items in your cart require a valid prescription. Please upload it in your profile before checking out.", {
+        duration: 5000,
+        action: {
+          label: "Go to Profile",
+          onClick: () => window.location.href = '/dashboard/profile'
+        }
+      });
+      return;
+    }
+
     setIsCheckingOut(true);
     try {
-      // Map cart items to the format backend expects
-      const orderData = {
-        pharmacyId: cartItems[0].pharmacyId, // Assuming all items from same pharmacy for simplicity
-        items: cartItems.map(item => ({
-          medicineId: item._id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        totalAmount: subtotal + (subtotal > 50 ? 0 : 5.99)
-      };
-
-      await apiClient("/orders", {
-        method: "POST",
-        body: JSON.stringify(orderData)
+      // Group items by pharmacyId
+      const groupedByPharmacy: { [key: string]: any[] } = {};
+      cartItems.forEach(item => {
+        if (!groupedByPharmacy[item.pharmacyId]) {
+          groupedByPharmacy[item.pharmacyId] = [];
+        }
+        groupedByPharmacy[item.pharmacyId].push(item);
       });
 
-      toast.success("Order placed successfully!");
+      // Create an order for each pharmacy
+      const orderPromises = Object.entries(groupedByPharmacy).map(([pharmacyId, items]) => {
+        const pharmacySubtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const pharmacyShipping = pharmacySubtotal > 50 ? 0 : 5.99;
+        
+        const orderData = {
+          pharmacyId,
+          items: items.map(item => ({
+            medicineId: item._id,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          totalAmount: pharmacySubtotal + pharmacyShipping
+        };
+
+        return apiClient("/orders", {
+          method: "POST",
+          body: JSON.stringify(orderData)
+        });
+      });
+
+      await Promise.all(orderPromises);
+
+      toast.success(Object.keys(groupedByPharmacy).length > 1 
+        ? "Orders placed successfully for all pharmacies!" 
+        : "Order placed successfully!");
+      
       clearCart();
       fetchOrders();
     } catch (error: any) {
@@ -106,7 +139,12 @@ export function OrdersPage() {
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className="text-xl font-bold" style={{ color: '#0F766E' }}>{item.name}</h3>
-                            <p className="text-sm text-gray-400">Inventory ID: {item._id.slice(-6)}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-100">
+                                {item.pharmacyName || "Standard Pharmacy"}
+                              </span>
+                              <p className="text-[10px] text-gray-400">ID: {item._id.slice(-6)}</p>
+                            </div>
                           </div>
                           <Button variant="ghost" size="icon" onClick={() => removeFromCart(item._id)} className="text-red-400 hover:text-red-600 hover:bg-red-50">
                             <Trash2 className="w-5 h-5" />
@@ -173,19 +211,32 @@ export function OrdersPage() {
           ) : (
             orders.map((order) => (
               <Card key={order._id} className="p-6 rounded-2xl hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-center mb-4">
-                   <div className="flex items-center gap-3">
-                      <div className="p-2 bg-teal-50 rounded-lg">
-                        <Package className="w-5 h-5 text-teal-600" />
-                      </div>
-                      <h3 className="font-bold">Order #{order._id.slice(-8).toUpperCase()}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        order.status === "Completed" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-teal-50 rounded-xl">
+                      <Package className="w-6 h-6 text-teal-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-teal-900 text-lg">Order #{order._id.slice(-8).toUpperCase()}</h3>
+                      <p className="text-xs text-gray-400">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pharmacy</p>
+                      <p className="font-bold text-teal-700">{order.pharmacyId?.name || "Marketplace"}</p>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${
+                        order.status === "DELIVERED" ? "bg-green-100 text-green-700" :
+                        order.status === "CANCELLED" ? "bg-red-100 text-red-700" :
+                        "bg-orange-100 text-orange-700"
                       }`}>
                         {order.status}
                       </span>
-                   </div>
-                   <p className="text-lg font-bold" style={{ color: '#0F766E' }}>${order.totalAmount?.toFixed(2)}</p>
+                      <p className="text-xl font-black mt-1" style={{ color: '#0F766E' }}>${order.totalAmount?.toFixed(2)}</p>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex justify-between items-center text-sm text-gray-500">
                   <p>Placed on {new Date(order.createdAt).toLocaleDateString()}</p>

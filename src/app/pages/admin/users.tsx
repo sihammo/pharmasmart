@@ -76,7 +76,19 @@ export function AdminUsers() {
       setNewUserData({ name: "", email: "", password: "", phone: "", role: "CUSTOMER" });
       fetchUsers();
     } catch (error: any) {
-      toast.error(error.message || "Failed to create user");
+    }
+  };
+
+  const handleUpdateRole = async (id: string, role: string) => {
+    try {
+      await apiClient(`/auth/users/${id}/role`, {
+        method: "PUT",
+        body: JSON.stringify({ role }),
+      });
+      toast.success("User role updated");
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update role");
     }
   };
 
@@ -258,18 +270,25 @@ export function AdminUsers() {
                       </div>
                     </td>
                     <td className="p-6">
-                      <Badge 
-                        variant="outline"
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      <Select 
+                        defaultValue={user.role} 
+                        onValueChange={(newRole) => handleUpdateRole(user._id, newRole)}
+                      >
+                        <SelectTrigger className={`w-[140px] h-8 rounded-full text-xs font-semibold border-2 ${
                           user.role === "ADMIN" 
                             ? "bg-purple-100 text-purple-700 border-purple-200"
                             : user.role === "PHARMACY_OWNER"
                               ? "bg-blue-100 text-blue-700 border-blue-200"
                               : "bg-emerald-100 text-emerald-700 border-emerald-200"
-                        }`}
-                      >
-                        {user.role}
-                      </Badge>
+                        }`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CUSTOMER">CUSTOMER</SelectItem>
+                          <SelectItem value="PHARMACY_OWNER">OWNER</SelectItem>
+                          <SelectItem value="ADMIN">ADMIN</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className="p-6 text-gray-600 text-sm">
                       {new Date(user.createdAt).toLocaleDateString()}

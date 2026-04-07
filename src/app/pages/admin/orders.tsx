@@ -1,121 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Search, Package, TrendingUp, Clock, CheckCircle, XCircle } from "lucide-react";
-
-const mockOrders = [
-  {
-    id: "ORD-2026-145",
-    customer: "John Smith",
-    email: "john.smith@example.com",
-    date: "March 17, 2026 10:30 AM",
-    items: 3,
-    total: 89.99,
-    status: "Completed",
-    payment: "Paid",
-    pharmacy: "HealthPlus Pharmacy"
-  },
-  {
-    id: "ORD-2026-144",
-    customer: "Sarah Johnson",
-    email: "sarah.j@example.com",
-    date: "March 17, 2026 10:18 AM",
-    items: 2,
-    total: 45.50,
-    status: "Processing",
-    payment: "Paid",
-    pharmacy: "MediCare Central"
-  },
-  {
-    id: "ORD-2026-143",
-    customer: "Mike Wilson",
-    email: "mike.wilson@example.com",
-    date: "March 17, 2026 10:05 AM",
-    items: 5,
-    total: 124.99,
-    status: "Completed",
-    payment: "Paid",
-    pharmacy: "Quick Meds Pharmacy"
-  },
-  {
-    id: "ORD-2026-142",
-    customer: "Emma Davis",
-    email: "emma.davis@example.com",
-    date: "March 17, 2026 09:15 AM",
-    items: 1,
-    total: 67.25,
-    status: "Pending",
-    payment: "Pending",
-    pharmacy: "HealthPlus Pharmacy"
-  },
-  {
-    id: "ORD-2026-141",
-    customer: "James Brown",
-    email: "james.brown@example.com",
-    date: "March 17, 2026 08:42 AM",
-    items: 4,
-    total: 198.75,
-    status: "Completed",
-    payment: "Paid",
-    pharmacy: "City Health Pharmacy"
-  },
-  {
-    id: "ORD-2026-140",
-    customer: "Lisa Anderson",
-    email: "lisa.a@example.com",
-    date: "March 17, 2026 07:30 AM",
-    items: 2,
-    total: 54.99,
-    status: "Shipped",
-    payment: "Paid",
-    pharmacy: "Wellness Express"
-  },
-  {
-    id: "ORD-2026-139",
-    customer: "David Martinez",
-    email: "david.m@example.com",
-    date: "March 16, 2026 11:45 PM",
-    items: 6,
-    total: 234.50,
-    status: "Cancelled",
-    payment: "Refunded",
-    pharmacy: "MediCare Central"
-  },
-  {
-    id: "ORD-2026-138",
-    customer: "Rachel Green",
-    email: "rachel.green@example.com",
-    date: "March 16, 2026 10:20 PM",
-    items: 1,
-    total: 89.99,
-    status: "Completed",
-    payment: "Paid",
-    pharmacy: "HealthPlus Pharmacy"
-  },
-];
+import { apiClient } from "../../api/client";
+import { toast } from "sonner";
 
 export function AdminOrders() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
 
-  const filteredOrders = mockOrders.filter((order) => {
-    const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         order.customer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === "All" || order.status === filterStatus;
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = await apiClient("/orders");
+        setOrders(data);
+      } catch (error: any) {
+        toast.error("Failed to fetch orders");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch = order._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         order.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === "All" || order.status === filterStatus.toUpperCase();
     return matchesSearch && matchesStatus;
   });
 
-  const totalRevenue = mockOrders.reduce((sum, order) => 
-    order.status === "Completed" ? sum + order.total : sum, 0
+  const totalRevenue = orders.reduce((sum, order) => 
+    order.status === "DELIVERED" ? sum + order.totalAmount : sum, 0
   );
 
   const statusCounts = {
-    completed: mockOrders.filter(o => o.status === "Completed").length,
-    processing: mockOrders.filter(o => o.status === "Processing").length,
-    pending: mockOrders.filter(o => o.status === "Pending").length,
-    shipped: mockOrders.filter(o => o.status === "Shipped").length,
-    cancelled: mockOrders.filter(o => o.status === "Cancelled").length,
+    completed: orders.filter(o => o.status === "DELIVERED").length,
+    processing: orders.filter(o => ["ACCEPTED", "READY"].includes(o.status)).length,
+    pending: orders.filter(o => o.status === "PENDING").length,
+    cancelled: orders.filter(o => o.status === "CANCELLED").length,
   };
 
   return (
@@ -133,7 +59,7 @@ export function AdminOrders() {
             <Package className="w-5 h-5" style={{ color: '#0F766E' }} />
             <p className="text-gray-600">Total Orders</p>
           </div>
-          <p className="text-3xl" style={{ color: '#0F766E' }}>{mockOrders.length}</p>
+          <p className="text-3xl" style={{ color: '#0F766E' }}>{orders.length}</p>
         </Card>
         <Card className="p-6 rounded-2xl">
           <div className="flex items-center gap-3 mb-2">
@@ -216,48 +142,45 @@ export function AdminOrders() {
             </thead>
             <tbody>
               {filteredOrders.map((order) => (
-                <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="p-4">
-                    <p style={{ color: '#0F766E' }}>{order.id}</p>
+                    <p style={{ color: '#0F766E' }}>#{order._id.slice(-8).toUpperCase()}</p>
                   </td>
                   <td className="p-4">
                     <div>
-                      <p style={{ color: '#0F766E' }}>{order.customer}</p>
-                      <p className="text-sm text-gray-500">{order.email}</p>
+                      <p style={{ color: '#0F766E' }}>{order.userId?.name || "Unknown User"}</p>
+                      <p className="text-sm text-gray-500">{order.userId?.email}</p>
                     </div>
                   </td>
-                  <td className="p-4 text-gray-700 text-sm">{order.date}</td>
-                  <td className="p-4 text-gray-700">{order.items}</td>
+                  <td className="p-4 text-gray-700 text-sm">{new Date(order.createdAt).toLocaleString()}</td>
+                  <td className="p-4 text-gray-700">{order.items?.length || 0}</td>
                   <td className="p-4">
-                    <p className="text-lg" style={{ color: '#0F766E' }}>${order.total.toFixed(2)}</p>
+                    <p className="text-lg" style={{ color: '#0F766E' }}>${order.totalAmount?.toFixed(2)}</p>
                   </td>
                   <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${
-                      order.status === "Completed"
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
+                      order.status === "DELIVERED"
                         ? "bg-green-100 text-green-800"
-                        : order.status === "Processing"
+                        : ["ACCEPTED", "READY"].includes(order.status)
                           ? "bg-blue-100 text-blue-800"
-                          : order.status === "Shipped"
-                            ? "bg-purple-100 text-purple-800"
-                            : order.status === "Pending"
-                              ? "bg-orange-100 text-orange-800"
-                              : "bg-red-100 text-red-800"
+                          : order.status === "PENDING"
+                            ? "bg-orange-100 text-orange-800"
+                            : "bg-red-100 text-red-800"
                     }`}>
                       {order.status}
                     </span>
                   </td>
                   <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      order.payment === "Paid"
-                        ? "bg-green-100 text-green-800"
-                        : order.payment === "Refunded"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-orange-100 text-orange-800"
-                    }`}>
-                      {order.payment}
+                    <span className="px-3 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                      Paid
                     </span>
                   </td>
-                  <td className="p-4 text-gray-700 text-sm">{order.pharmacy}</td>
+                  <td className="p-4">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-teal-800">{order.pharmacyId?.name || "Direct Sale"}</span>
+                      <span className="text-[10px] text-gray-400 capitalize">{order.pharmacyId?.address}</span>
+                    </div>
+                  </td>
                   <td className="p-4">
                     <Button 
                       variant="outline"
@@ -277,15 +200,11 @@ export function AdminOrders() {
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <p className="text-gray-600">Showing {filteredOrders.length} of {mockOrders.length} orders</p>
+        <p className="text-gray-600">Showing {filteredOrders.length} of {orders.length} orders</p>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-2 rounded-lg" style={{ borderColor: '#0F766E', color: '#0F766E' }}>
-            Previous
-          </Button>
+          <Button variant="outline" className="border-2 rounded-lg" style={{ borderColor: '#0F766E', color: '#0F766E' }}>Previous</Button>
           <Button className="bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg">1</Button>
-          <Button variant="outline" className="border-2 rounded-lg" style={{ borderColor: '#0F766E', color: '#0F766E' }}>
-            Next
-          </Button>
+          <Button variant="outline" className="border-2 rounded-lg" style={{ borderColor: '#0F766E', color: '#0F766E' }}>Next</Button>
         </div>
       </div>
     </div>

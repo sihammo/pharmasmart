@@ -7,6 +7,7 @@ interface CartItem {
   price: number;
   quantity: number;
   pharmacyId: string;
+  pharmacyName?: string;
   stockQuantity: number;
   requiresPrescription: boolean;
 }

@@ -17,11 +17,16 @@ export function DashboardLayout() {
     navigate("/login");
   };
 
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Home" },
-    { path: "/dashboard/pharmacies", icon: MapPin, label: "Pharmacies" },
-    { path: "/dashboard/medicines", icon: Pill, label: "Medicines" },
-    { path: "/dashboard/health-packs", icon: Heart, label: "Health Packs" },
+    ...(user?.role === "CUSTOMER" ? [
+      { path: "/dashboard/pharmacies", icon: MapPin, label: "Pharmacies" },
+      { path: "/dashboard/medicines", icon: Pill, label: "Medicines" },
+      { path: "/dashboard/health-packs", icon: Heart, label: "Health Packs" },
+    ] : []),
     { path: "/dashboard/orders", icon: ShoppingCart, label: "Orders" },
     { path: "/dashboard/account", icon: User, label: "Account" },
     { path: "/dashboard/profile", icon: User, label: "Settings" },

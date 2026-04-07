@@ -476,31 +476,16 @@ export function ProfilePage() {
               </div>
               <h2 className="text-2xl" style={{ color: '#0F766E' }}>Payment Methods</h2>
             </div>
-
-            <div className="space-y-4">
-              <Card className="p-4 rounded-xl" style={{ backgroundColor: '#B7D1CC' }}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-8 rounded flex items-center justify-center bg-white">
-                      💳
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Visa ending in 4242</p>
-                      <p className="text-xs text-gray-500">Expires 12/2027</p>
-                    </div>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-sm bg-white" style={{ color: '#0F766E' }}>
-                    Default
-                  </span>
-                </div>
-              </Card>
-
+            <div className="text-center py-12 border-2 border-dashed border-[#B7D1CC] rounded-2xl bg-gray-50/50">
+              <div className="w-16 h-16 rounded-full bg-white mx-auto flex items-center justify-center mb-4 shadow-sm">
+                <CreditCard className="w-8 h-8 text-[#B7D1CC]" />
+              </div>
+              <p className="text-gray-500 font-medium">No payment methods added yet</p>
               <Button 
-                variant="outline"
-                className="w-full border-2 border-dashed rounded-lg"
-                style={{ borderColor: '#0F766E', color: '#0F766E' }}
+                variant="ghost"
+                className="mt-4 text-[#0F766E] font-bold hover:bg-teal-50"
               >
-                + Add Payment Method
+                + Add New Card
               </Button>
             </div>
           </Card>

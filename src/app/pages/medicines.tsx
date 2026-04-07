@@ -175,7 +175,14 @@ export function MedicinesPage() {
                           <p className="text-3xl font-black" style={{ color: '#0F766E' }}>${medicine.price.toFixed(2)}</p>
                        </div>
                        <Button 
-                          onClick={() => addToCart(medicine)}
+                          onClick={() => {
+                            const itemToAdd = {
+                              ...medicine,
+                              pharmacyId: medicine.pharmacyId?._id || medicine.pharmacyId,
+                              pharmacyName: medicine.pharmacyId?.name || "Unknown Pharmacy"
+                            };
+                            addToCart(itemToAdd);
+                          }}
                           disabled={medicine.stockQuantity <= 0}
                           className="bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-2xl h-14 px-8 shadow-lg shadow-teal-900/10 active:scale-95 transition-all"
                        >

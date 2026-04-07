@@ -53,10 +53,7 @@ interface UserData {
   healthProfile: HealthProfile;
 }
 
-const recentOrders = [
-  { id: "ORD-2026-001", date: "March 15, 2026", status: "Delivered", total: 67.48, items: ["Paracetamol 500mg", "Vitamin D3"] },
-  { id: "ORD-2026-002", date: "March 10, 2026", status: "Delivered", total: 89.99, items: ["Diabetes Care Pack"] },
-];
+
 
 export function AccountPage() {
   const [user, setUser] = useState<UserData | null>(null);
@@ -64,12 +61,15 @@ export function AccountPage() {
   const [medicines, setMedicines] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [isAddingMedicine, setIsAddingMedicine] = useState(false);
+  const [editingMed, setEditingMed] = useState<any>(null);
   const [newMedicine, setNewMedicine] = useState({
     name: '',
     category: '',
     price: '',
-    stock: '',
-    description: ''
+    stockQuantity: '',
+    description: '',
+    requiresPrescription: false,
+    imageUrl: ''
   });
   const [loading, setLoading] = useState(true);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -111,16 +111,34 @@ export function AccountPage() {
 
   const handleAddMedicine = async () => {
     try {
-      const data = await apiClient("/medicines", {
-        method: "POST",
-        body: JSON.stringify({ ...newMedicine, pharmacyId: pharmacy._id })
+      const isEditing = !!editingMed;
+      const endpoint = isEditing ? `/medicines/${editingMed._id}` : "/medicines";
+      const method = isEditing ? "PUT" : "POST";
+
+      const data = await apiClient(endpoint, {
+        method,
+        body: JSON.stringify({ 
+          ...newMedicine, 
+          pharmacyId: pharmacy._id 
+        })
       });
-      setMedicines([...medicines, data]);
+
+      if (isEditing) {
+        setMedicines(medicines.map(m => m._id === data._id ? data : m));
+        toast.success("Medicine updated successfully.");
+      } else {
+        setMedicines([...medicines, data]);
+        toast.success("Medicine added successfully.");
+      }
+
       setIsAddingMedicine(false);
-      setNewMedicine({ name: '', category: '', price: '', stock: '', description: '' });
-      toast.success("Medicine added successfully.");
-    } catch (error) {
-      toast.error("Failed to add medicine.");
+      setEditingMed(null);
+      setNewMedicine({ 
+        name: '', category: '', price: '', stockQuantity: '', 
+        description: '', requiresPrescription: false, imageUrl: '' 
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save medicine.");
     }
   };
 
@@ -143,6 +161,9 @@ export function AccountPage() {
       
       if (data.role === "PHARMACY_OWNER") {
         fetchPharmacy();
+      } else {
+        const ordersData = await apiClient("/orders/myorders");
+        setOrders(ordersData);
       }
     } catch (error: any) {
       toast.error("Failed to load profile");
@@ -544,28 +565,34 @@ export function AccountPage() {
                   <Button variant="ghost" className="text-[#0F766E] font-bold">View History</Button>
                 </div>
                 <div className="space-y-4">
-                  {recentOrders.map((order) => (
-                    <div key={order.id} className="group flex items-center justify-between p-5 rounded-3xl hover:bg-[#F0FDFA] transition-all border border-gray-100/50 cursor-pointer">
+                  {orders.length > 0 ? orders.map((order) => (
+                    <div key={order._id} className="group flex items-center justify-between p-5 rounded-3xl hover:bg-[#F0FDFA] transition-all border border-gray-100/50 cursor-pointer">
                       <div className="flex items-center gap-5">
                         <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:bg-[#0F766E] transition-colors">
                           <Clock className="w-6 h-6 text-[#0F766E] group-hover:text-white" />
                         </div>
                         <div>
                           <div className="flex items-center gap-3 mb-1">
-                            <p className="font-bold text-gray-800">{order.id}</p>
-                            <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-full uppercase tracking-widest">
+                            <p className="font-bold text-gray-800">#{order._id.slice(-6).toUpperCase()}</p>
+                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-widest ${
+                              order.status === "Completed" ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
+                            }`}>
                               {order.status}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-400 font-medium">{order.date} • {order.items.join(", ")}</p>
+                          <p className="text-xs text-gray-400 font-medium">
+                            {new Date(order.createdAt).toLocaleDateString()} • {order.items?.length || 0} items
+                          </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl font-bold text-[#0F766E]">${order.total.toFixed(2)}</p>
+                        <p className="text-xl font-bold text-[#0F766E]">${order.totalAmount?.toFixed(2)}</p>
                         <ExternalLink className="w-4 h-4 ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-center py-8 text-gray-500 italic">No recent activity found.</div>
+                  )}
                 </div>
               </Card>
             </>
@@ -804,47 +831,71 @@ export function AccountPage() {
                       <p className="text-sm text-gray-400">Manage your pharmacy's stock and pricing</p>
                     </div>
                   </div>
-                  <Dialog open={isAddingMedicine} onOpenChange={setIsAddingMedicine}>
-                    <DialogTrigger asChild>
-                      <Button style={{ backgroundColor: '#0F766E' }} className="text-white rounded-xl px-6 font-bold shadow-lg shadow-teal-900/10">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Product
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-white rounded-3xl">
-                      <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold text-[#0F766E]">Add New Medicine</DialogTitle>
-                      </DialogHeader>
-                      <div className="grid gap-6 py-4">
-                        <div className="grid gap-2">
-                          <Label className="text-gray-500">Medicine Name</Label>
-                          <Input value={newMedicine.name} onChange={(e) => setNewMedicine({...newMedicine, name: e.target.value})} className="rounded-xl" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label className="text-gray-500">Category</Label>
-                            <Input value={newMedicine.category} onChange={(e) => setNewMedicine({...newMedicine, category: e.target.value})} className="rounded-xl" />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label className="text-gray-500">Price ($)</Label>
-                            <Input type="number" value={newMedicine.price} onChange={(e) => setNewMedicine({...newMedicine, price: e.target.value})} className="rounded-xl" />
-                          </div>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label className="text-gray-500">Stock Quantity</Label>
-                          <Input type="number" value={newMedicine.stock} onChange={(e) => setNewMedicine({...newMedicine, stock: e.target.value})} className="rounded-xl" />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label className="text-gray-500">Description</Label>
-                          <Input value={newMedicine.description} onChange={(e) => setNewMedicine({...newMedicine, description: e.target.value})} className="rounded-xl" />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="ghost" onClick={() => setIsAddingMedicine(false)} className="rounded-xl">Cancel</Button>
-                        <Button onClick={handleAddMedicine} style={{ backgroundColor: '#0F766E' }} className="text-white rounded-xl px-10">Add to Stock</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <Dialog open={isAddingMedicine} onOpenChange={(v) => {
+                     setIsAddingMedicine(v);
+                     if (!v) {
+                       setEditingMed(null);
+                       setNewMedicine({ name: '', category: '', price: '', stockQuantity: '', description: '', requiresPrescription: false, imageUrl: '' });
+                     }
+                   }}>
+                     <DialogTrigger asChild>
+                       <Button style={{ backgroundColor: '#0F766E' }} className="text-white rounded-xl px-6 font-bold shadow-lg shadow-teal-900/10">
+                         <Plus className="w-4 h-4 mr-2" />
+                         Add Product
+                       </Button>
+                     </DialogTrigger>
+                     <DialogContent className="bg-white rounded-3xl sm:max-w-md">
+                       <DialogHeader>
+                         <DialogTitle className="text-2xl font-bold text-[#0F766E]">
+                           {editingMed ? "Edit Medicine" : "Add New Medicine"}
+                         </DialogTitle>
+                       </DialogHeader>
+                       <div className="grid gap-4 py-4">
+                         <div className="grid gap-2">
+                           <Label className="text-gray-500">Medicine Name</Label>
+                           <Input value={newMedicine.name} onChange={(e) => setNewMedicine({...newMedicine, name: e.target.value})} className="rounded-xl" />
+                         </div>
+                         <div className="grid grid-cols-2 gap-4">
+                           <div className="grid gap-2">
+                             <Label className="text-gray-500">Category</Label>
+                             <Input value={newMedicine.category} onChange={(e) => setNewMedicine({...newMedicine, category: e.target.value})} className="rounded-xl" />
+                           </div>
+                           <div className="grid gap-2">
+                             <Label className="text-gray-500">Price ($)</Label>
+                             <Input type="number" value={newMedicine.price} onChange={(e) => setNewMedicine({...newMedicine, price: e.target.value})} className="rounded-xl" />
+                           </div>
+                         </div>
+                         <div className="grid gap-2">
+                           <Label className="text-gray-500">Stock Quantity</Label>
+                           <Input type="number" value={newMedicine.stockQuantity} onChange={(e) => setNewMedicine({...newMedicine, stockQuantity: e.target.value})} className="rounded-xl" />
+                         </div>
+                         <div className="flex items-center gap-3 p-3 bg-teal-50/50 rounded-xl">
+                            <input 
+                              type="checkbox" 
+                              id="rx-req"
+                              checked={newMedicine.requiresPrescription}
+                              onChange={(e) => setNewMedicine({...newMedicine, requiresPrescription: e.target.checked})}
+                              className="w-4 h-4"
+                            />
+                            <Label htmlFor="rx-req" className="text-sm font-bold text-teal-800 cursor-pointer">Requires Prescription (R𝗑 Only)</Label>
+                         </div>
+                         <div className="grid gap-2">
+                           <Label className="text-gray-500">Image URL (Optional)</Label>
+                           <Input value={newMedicine.imageUrl} onChange={(e) => setNewMedicine({...newMedicine, imageUrl: e.target.value})} className="rounded-xl" placeholder="https://..." />
+                         </div>
+                         <div className="grid gap-2">
+                           <Label className="text-gray-500">Description</Label>
+                           <Input value={newMedicine.description} onChange={(e) => setNewMedicine({...newMedicine, description: e.target.value})} className="rounded-xl" />
+                         </div>
+                       </div>
+                       <DialogFooter>
+                         <Button variant="ghost" onClick={() => setIsAddingMedicine(false)} className="rounded-xl">Cancel</Button>
+                         <Button onClick={handleAddMedicine} style={{ backgroundColor: '#0F766E' }} className="text-white rounded-xl px-10">
+                           {editingMed ? "Save Changes" : "Add to Stock"}
+                         </Button>
+                       </DialogFooter>
+                     </DialogContent>
+                   </Dialog>
                 </div>
 
                 {medicines.length > 0 ? (
@@ -868,16 +919,32 @@ export function AccountPage() {
                             </td>
                             <td className="px-6 py-4 font-mono font-bold text-[#0F766E]">${med.price.toFixed(2)}</td>
                             <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${med.stock < 10 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
-                                <span className={`font-bold ${med.stock < 10 ? 'text-red-500' : 'text-gray-700'}`}>{med.stock} units</span>
-                              </div>
-                            </td>
+                               <div className="flex items-center gap-2">
+                                 <span className={`w-2 h-2 rounded-full ${med.stockQuantity < 10 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
+                                 <span className={`font-bold ${med.stockQuantity < 10 ? 'text-red-500' : 'text-gray-700'}`}>{med.stockQuantity} units</span>
+                               </div>
+                             </td>
                             <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-[#0F766E]">
-                                  <Edit size={14} />
-                                </Button>
+                                 <Button 
+                                   variant="ghost" 
+                                   className="h-8 w-8 p-0 text-gray-400 hover:text-[#0F766E]"
+                                   onClick={() => {
+                                     setEditingMed(med);
+                                     setNewMedicine({
+                                       name: med.name,
+                                       category: med.category,
+                                       price: med.price.toString(),
+                                       stockQuantity: med.stockQuantity.toString(),
+                                       description: med.description || '',
+                                       requiresPrescription: med.requiresPrescription || false,
+                                       imageUrl: med.imageUrl || ''
+                                     });
+                                     setIsAddingMedicine(true);
+                                   }}
+                                 >
+                                   <Edit size={14} />
+                                 </Button>
                                 <Button 
                                   variant="ghost" 
                                   className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"

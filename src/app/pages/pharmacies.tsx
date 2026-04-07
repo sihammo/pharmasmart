@@ -177,11 +177,20 @@ export function PharmaciesPage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-none px-3 py-1 rounded-full text-xs">
-                      Open Now
+                  <div className="flex flex-col gap-2">
+                    <p className="text-gray-500 text-sm flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5" /> {pharmacy.phone || "No phone listed"}
+                    </p>
+                    <p className="text-gray-500 text-sm flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5" /> {pharmacy.openingTime && pharmacy.closingTime ? `${pharmacy.openingTime} - ${pharmacy.closingTime}` : "Hours not specified"}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <Badge className={`${pharmacy.openingTime ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-800"} border-none px-3 py-1 rounded-full text-xs`}>
+                      {pharmacy.openingTime ? "Open Now" : "Unknown Status"}
                     </Badge>
-                    <span className="text-xs text-gray-400 font-medium uppercase tracking-tighter italic">License: {pharmacy.licenseNumber || "Pending"}</span>
+                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter italic">License: {pharmacy.licenseNumber || "Pending"}</span>
                   </div>
 
                   <div className="flex gap-2 pt-2">
