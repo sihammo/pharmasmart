@@ -309,9 +309,63 @@ export function OrdersPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-between items-center text-sm text-gray-500">
+                <div className="flex justify-between items-center text-sm text-gray-500 mt-2 pt-3 border-t border-gray-50">
                   <p>Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
-                  <Button variant="link" className="text-teal-600 p-0 h-4">View Invoice</Button>
+                  {user?.role === "PHARMACY_OWNER" ? (
+                    <div className="flex gap-2">
+                      {order.status === "PENDING" && (
+                        <>
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white rounded-xl h-8 px-4 text-xs font-bold"
+                            onClick={async () => {
+                              try {
+                                await apiClient(`/orders/${order._id}/status`, { method: "PUT", body: JSON.stringify({ status: "PROCESSING" }) });
+                                setOrders(prev => prev.map((o: any) => o._id === order._id ? { ...o, status: "PROCESSING" } : o));
+                                toast.success("Order confirmed!");
+                              } catch { toast.error("Failed to update order"); }
+                            }}
+                          >
+                            ✓ Confirm
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-red-200 text-red-600 hover:bg-red-50 rounded-xl h-8 px-4 text-xs font-bold"
+                            onClick={async () => {
+                              try {
+                                await apiClient(`/orders/${order._id}/status`, { method: "PUT", body: JSON.stringify({ status: "CANCELLED" }) });
+                                setOrders(prev => prev.map((o: any) => o._id === order._id ? { ...o, status: "CANCELLED" } : o));
+                                toast.info("Order cancelled.");
+                              } catch { toast.error("Failed to update order"); }
+                            }}
+                          >
+                            ✕ Cancel
+                          </Button>
+                        </>
+                      )}
+                      {order.status === "PROCESSING" && (
+                        <Button
+                          size="sm"
+                          className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl h-8 px-4 text-xs font-bold"
+                          onClick={async () => {
+                            try {
+                              await apiClient(`/orders/${order._id}/status`, { method: "PUT", body: JSON.stringify({ status: "DELIVERED" }) });
+                              setOrders(prev => prev.map((o: any) => o._id === order._id ? { ...o, status: "DELIVERED" } : o));
+                              toast.success("Order marked as delivered!");
+                            } catch { toast.error("Failed to update order"); }
+                          }}
+                        >
+                          🚚 Mark Delivered
+                        </Button>
+                      )}
+                      {(order.status === "DELIVERED" || order.status === "CANCELLED") && (
+                        <span className="text-xs text-gray-400 italic">No further actions</span>
+                      )}
+                    </div>
+                  ) : (
+                    <Button variant="link" className="text-teal-600 p-0 h-4">View Invoice</Button>
+                  )}
                 </div>
               </Card>
             ))

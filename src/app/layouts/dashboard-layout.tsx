@@ -13,6 +13,7 @@ export function DashboardLayout() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -42,12 +43,13 @@ export function DashboardLayout() {
             });
 
             socket.on("new_order", (order: any) => {
-              toast.success(`🚨 Incoming Order Alert! #${order._id.slice(-6).toUpperCase()}`, {
+              setNotifCount(prev => prev + 1);
+              toast.success(`🚨 New Client Order! #${order._id.slice(-6).toUpperCase()}`, {
                 duration: 12000,
-                description: `Total: $${order.totalAmount.toFixed(2)}`,
+                description: `From: ${order.userId?.name || "Client"} • $${order.totalAmount?.toFixed(2)}`,
                 action: {
-                  label: "View Request",
-                  onClick: () => navigate("/dashboard/account")
+                  label: "View Orders",
+                  onClick: () => { navigate("/dashboard/orders"); setNotifCount(0); }
                 }
               });
             });
@@ -75,7 +77,9 @@ export function DashboardLayout() {
     ] : []),
     { path: "/dashboard/orders", icon: ShoppingCart, label: user?.role === "PHARMACY_OWNER" ? "Client Orders" : "Orders" },
     { path: "/dashboard/account", icon: User, label: "Account" },
-    { path: "/dashboard/profile", icon: User, label: "Settings" },
+    ...(user?.role !== "PHARMACY_OWNER" ? [
+      { path: "/dashboard/profile", icon: User, label: "Settings" },
+    ] : []),
   ];
 
 
@@ -120,9 +124,21 @@ export function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative"
+              onClick={() => { navigate("/dashboard/orders"); setNotifCount(0); }}
+            >
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: '#0F766E' }}></span>
+              {notifCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center animate-pulse">
+                  {notifCount > 9 ? "9+" : notifCount}
+                </span>
+              )}
+              {notifCount === 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: '#0F766E' }}></span>
+              )}
             </Button>
             <Link to="/dashboard/profile">
               <Button variant="ghost" size="icon" className="rounded-full w-10 h-10" style={{ backgroundColor: '#B7D1CC' }}>
