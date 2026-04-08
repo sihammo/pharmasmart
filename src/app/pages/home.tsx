@@ -8,7 +8,7 @@ import { apiClient } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 export function HomePage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [pharmacies, setPharmacies] = useState<any[]>([]);
   const [medicines, setMedicines] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +48,7 @@ export function HomePage() {
       <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
         <div className="rounded-[2rem] p-10 relative overflow-hidden shadow-2xl shadow-teal-900/20" style={{ background: 'linear-gradient(135deg, #0F766E 0%, #2F8F7E 100%)' }}>
           <div className="relative z-10">
-            <h1 className="text-4xl font-bold text-white mb-2">Welcome back, {user.name}</h1>
+            <h1 className="text-4xl font-bold text-white mb-2">Welcome back, {user?.name || 'User'}</h1>
             <p className="text-teal-50/80 mb-0">Pharmacy Management Hub • {new Date().toLocaleDateString()}</p>
           </div>
         </div>

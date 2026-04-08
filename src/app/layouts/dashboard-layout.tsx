@@ -11,11 +11,12 @@ import { useAuth } from "../context/AuthContext";
 export function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) {
        navigate("/");
        return;
@@ -27,7 +28,10 @@ export function DashboardLayout() {
       navigate("/dashboard");
       toast.error("Account restricted to management view only.");
     }
-  }, [user, navigate, location.pathname]);
+  }, [user, navigate, location.pathname, isLoading]);
+
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#B7D1CC]">Loading...</div>;
+  if (!user) return null;
 
   useEffect(() => {
     if (user?.role === "PHARMACY_OWNER") {

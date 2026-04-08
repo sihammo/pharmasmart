@@ -7,15 +7,17 @@ import { useAuth } from "../context/AuthContext";
 export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user || user.role !== "ADMIN") {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, navigate, isLoading]);
 
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-gray-50">Loading...</div>;
   if (!user || user.role !== "ADMIN") return null;
 
   const navItems = [
