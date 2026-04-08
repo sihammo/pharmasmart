@@ -4,15 +4,18 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000
 export const apiClient = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem("token");
   
-  const headers = {
-    "Content-Type": "application/json",
+  const headers: Record<string, string> = {
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    ...options.headers,
   };
+
+  // Only add Content-Type: application/json if body is NOT FormData
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers,
+    headers: { ...headers, ...options.headers },
   });
 
   if (!response.ok) {

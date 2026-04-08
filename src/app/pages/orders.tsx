@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
-import { ShoppingCart, Trash2, Plus, Minus, Package, CheckCircle, Loader2 } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, Package, CheckCircle, Loader2, FileUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { apiClient } from "../api/client";
 import { toast } from "sonner";
@@ -13,6 +13,32 @@ export function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [prescriptionUrl, setPrescriptionUrl] = useState<string | null>(null);
+
+  const requiresPrescription = cartItems.some(item => item.requiresPrescription);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("prescription", file);
+
+    setIsUploading(true);
+    try {
+      const data = await apiClient("/upload", {
+        method: "POST",
+        body: formData
+      });
+      setPrescriptionUrl(data.url);
+      toast.success("Prescription uploaded securely!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload prescription");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -34,14 +60,9 @@ export function OrdersPage() {
     if (cartItems.length === 0) return;
     
     // Check if any item requires a prescription
-    const requiresPrescription = cartItems.some(item => item.requiresPrescription);
-    if (requiresPrescription) {
-      toast.error("One or more items in your cart require a valid prescription. Please upload it in your profile before checking out.", {
+    if (requiresPrescription && !prescriptionUrl) {
+      toast.error("One or more items in your cart require a valid prescription. Please upload it below before checking out.", {
         duration: 5000,
-        action: {
-          label: "Go to Profile",
-          onClick: () => window.location.href = '/dashboard/profile'
-        }
       });
       return;
     }
@@ -71,7 +92,8 @@ export function OrdersPage() {
             quantity: item.quantity,
             price: item.price
           })),
-          totalAmount: pharmacySubtotal + pharmacyShipping
+          totalAmount: pharmacySubtotal + pharmacyShipping,
+          prescriptionUrl: prescriptionUrl || undefined
         };
 
         return apiClient("/orders", {
@@ -187,9 +209,37 @@ export function OrdersPage() {
                       <span>${total.toFixed(2)}</span>
                     </div>
                   </div>
+
+                  {requiresPrescription && (
+                    <div className="mt-6 p-4 rounded-xl bg-orange-50 border border-orange-100">
+                      <p className="text-sm font-bold text-orange-800 mb-2">Prescription Required</p>
+                      <p className="text-xs text-orange-600 mb-3">Some items in your cart require a doctor's prescription. Please upload it here to proceed.</p>
+                      
+                      {!prescriptionUrl ? (
+                        <div className="relative">
+                          <input 
+                            type="file" 
+                            accept=".pdf,image/*"
+                            onChange={handleFileUpload}
+                            disabled={isUploading}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" 
+                          />
+                          <Button variant="outline" className="w-full bg-white border-orange-200 text-orange-700 pointer-events-none">
+                            {isUploading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading...</> : <><FileUp className="w-4 h-4 mr-2" /> Select File</>}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-green-700 bg-green-50 p-2 rounded-lg border border-green-200">
+                          <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                          <span className="text-xs font-bold truncate">Uploaded successfully</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <Button 
                     onClick={handleCheckout} 
-                    disabled={isCheckingOut}
+                    disabled={isCheckingOut || isUploading || (requiresPrescription && !prescriptionUrl)}
                     className="w-full h-14 text-lg bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-xl mt-8 shadow-lg shadow-teal-900/20"
                   >
                     {isCheckingOut ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</> : "Complete Checkout"}

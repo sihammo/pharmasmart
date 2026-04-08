@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Order from "../models/Order";
 import Medicine from "../models/Medicine";
 import Pharmacy from "../models/Pharmacy";
+import { getIO } from "../socket";
 
 export const createOrder = async (req: Request | any, res: Response) => {
   try {
@@ -42,6 +43,13 @@ export const createOrder = async (req: Request | any, res: Response) => {
       await Medicine.findByIdAndUpdate(item.medicineId, {
         $inc: { stockQuantity: -item.quantity }
       });
+    }
+
+    // 3. Emit real-time notification to the Pharmacy
+    try {
+      getIO().to(pharmacyId).emit("new_order", createdOrder);
+    } catch (socketError) {
+      console.error("Socket error on order creation:", socketError);
     }
 
     res.status(201).json(createdOrder);

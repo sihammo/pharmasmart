@@ -63,6 +63,19 @@ export function AdminPharmacies() {
     }
   };
 
+  const handleToggleApproval = async (id: string, currentStatus: boolean) => {
+    try {
+      await apiClient(`/pharmacies/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ isApproved: !currentStatus })
+      });
+      toast.success(!currentStatus ? "Pharmacy Verified!" : "Verification Revoked");
+      fetchPharmacies();
+    } catch (error: any) {
+      toast.error("Failed to update status");
+    }
+  };
+
   const filtered = pharmacies.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.address.toLowerCase().includes(searchQuery.toLowerCase())
@@ -147,6 +160,14 @@ export function AdminPharmacies() {
                     <MapPin className="w-8 h-8 text-[#0F766E]" />
                   </div>
                   <div className="flex gap-2">
+                    <Button 
+                      title={pharmacy.isApproved ? "Revoke Verification" : "Verify Pharmacy"}
+                      onClick={() => handleToggleApproval(pharmacy._id, pharmacy.isApproved)}
+                      variant="ghost" size="icon" 
+                      className={`rounded-full ${pharmacy.isApproved ? 'hover:bg-orange-50 text-orange-600' : 'hover:bg-green-50 text-green-600'}`}
+                    >
+                      {pharmacy.isApproved ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                    </Button>
                     <Button variant="ghost" size="icon" className="rounded-full hover:bg-teal-50 text-teal-600">
                       <Edit2 className="w-4 h-4" />
                     </Button>

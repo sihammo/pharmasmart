@@ -3,7 +3,25 @@ import Pharmacy from "../models/Pharmacy";
 
 export const getPharmacies = async (req: Request, res: Response) => {
   try {
-    const pharmacies = await Pharmacy.find();
+    const { lat, lng, maxDistance = 50000 } = req.query;
+    let pharmacies;
+
+    if (lat && lng) {
+      pharmacies = await Pharmacy.find({
+        location: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [parseFloat(lng as string), parseFloat(lat as string)]
+            },
+            $maxDistance: parseInt(maxDistance as string) // in meters
+          }
+        }
+      });
+    } else {
+      pharmacies = await Pharmacy.find();
+    }
+    
     res.json(pharmacies);
   } catch (error: any) {
     res.status(500).json({ message: "Server Error", error: error.message });

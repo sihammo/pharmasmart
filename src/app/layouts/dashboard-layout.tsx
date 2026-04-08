@@ -2,13 +2,52 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { Package, Home, MapPin, Pill, Heart, ShoppingCart, User, Search, Bell, Menu, X, LogOut } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { apiClient } from "../api/client";
+import { io } from "socket.io-client";
 
 export function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Fetch from localStorage
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  useEffect(() => {
+    if (user?.role === "PHARMACY_OWNER") {
+      apiClient("/pharmacies/my-pharmacy")
+        .then((data: any) => {
+          if (data && data._id) {
+            // Retrieve base URL (strip /api if present)
+            const baseUrl = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000";
+            const socket = io(baseUrl);
+
+            socket.on("connect", () => {
+              socket.emit("join_pharmacy", data._id);
+            });
+
+            socket.on("new_order", (order: any) => {
+              toast.success(`🚨 Incoming Order Alert! #${order._id.slice(-6).toUpperCase()}`, {
+                duration: 12000,
+                description: `Total: $${order.totalAmount.toFixed(2)}`,
+                action: {
+                  label: "View Request",
+                  onClick: () => navigate("/dashboard/account")
+                }
+              });
+            });
+
+            return () => {
+              socket.disconnect();
+            };
+          }
+        })
+        .catch(() => console.error("No pharmacy connected for socket notifications"));
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -16,9 +55,6 @@ export function DashboardLayout() {
     toast.info("Logged out successfully");
     navigate("/login");
   };
-
-  const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : null;
 
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Home" },
