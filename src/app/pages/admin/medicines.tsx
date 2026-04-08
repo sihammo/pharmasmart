@@ -184,7 +184,13 @@ export function AdminMedicines() {
                  <tr key={med._id} className="hover:bg-teal-50/20 transition-colors group">
                     <td className="px-6 py-4">
                        <p className="font-bold text-[#0F766E] text-lg">{med.name}</p>
-                       <p className="text-xs text-gray-400 font-semibold">{med.category} • Assign: {pharmacies.find(p => p._id === med.pharmacyId)?.name || med.pharmacyId}</p>
+                        <p className="text-xs text-gray-400 font-semibold">
+                          {med.category} • Assign: {
+                            typeof med.pharmacyId === 'object' 
+                              ? med.pharmacyId.name 
+                              : (pharmacies.find(p => p._id === med.pharmacyId)?.name || med.pharmacyId)
+                          }
+                        </p>
                     </td>
                     <td className="px-6 py-4">
                        <div className="flex items-center gap-3">
