@@ -112,16 +112,6 @@ export function DashboardLayout() {
             </Link>
           </div>
 
-          <div className="flex-1 max-w-2xl mx-4 hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                type="search"
-                placeholder="Search medicines, pharmacies, or health packs..."
-                className="pl-10 h-10 border-2 focus:border-[#0F766E] rounded-lg"
-              />
-            </div>
-          </div>
 
           <div className="flex items-center gap-4">
             <Button 
