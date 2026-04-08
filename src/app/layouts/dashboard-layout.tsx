@@ -78,10 +78,6 @@ export function DashboardLayout() {
     { path: "/dashboard/profile", icon: User, label: "Settings" },
   ];
 
-// ... (active logic)
-
-// ... inside the nav Loop:
-// I'll just add it after the map.
 
   const isActive = (path: string) => {
     if (path === "/dashboard") {
