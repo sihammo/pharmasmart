@@ -130,17 +130,19 @@ export function OrdersPage() {
         <p className="text-xl text-gray-600">Manage your shopping cart and order history</p>
       </div>
 
-      <Tabs defaultValue="cart" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2 h-12 p-1 rounded-xl bg-teal-50 border border-teal-100">
-          <TabsTrigger value="cart" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
-            <ShoppingCart className="w-5 h-5 mr-2" />
-            Cart ({cartItems.length})
-          </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
-            <Package className="w-5 h-5 mr-2" />
-            History
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue={user?.role === "PHARMACY_OWNER" ? "history" : "cart"} className="space-y-6">
+        {user?.role !== "PHARMACY_OWNER" && (
+          <TabsList className="grid w-full max-w-md grid-cols-2 h-12 p-1 rounded-xl bg-teal-50 border border-teal-100">
+            <TabsTrigger value="cart" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              Cart ({cartItems.length})
+            </TabsTrigger>
+            <TabsTrigger value="history" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
+              <Package className="w-5 h-5 mr-2" />
+              History
+            </TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="cart" className="space-y-6">
           {cartItems.length === 0 ? (
@@ -259,8 +261,14 @@ export function OrdersPage() {
           ) : orders.length === 0 ? (
             <Card className="p-12 text-center rounded-2xl border-2 border-dashed border-gray-100">
               <Package className="w-16 h-16 mx-auto mb-4 text-gray-200" />
-              <h3 className="text-2xl mb-2 text-gray-600">No past orders</h3>
-              <p className="text-gray-500">Your order history will appear here once you make a purchase.</p>
+              <h3 className="text-2xl mb-2 text-gray-600">
+                {user?.role === "PHARMACY_OWNER" ? "No incoming orders yet" : "No past orders"}
+              </h3>
+              <p className="text-gray-500">
+                {user?.role === "PHARMACY_OWNER" 
+                  ? "Orders from clients will appear here automatically." 
+                  : "Your order history will appear here once you make a purchase."}
+              </p>
             </Card>
           ) : (
             orders.map((order) => (
