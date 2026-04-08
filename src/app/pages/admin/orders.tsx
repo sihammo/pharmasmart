@@ -80,7 +80,7 @@ export function AdminOrders() {
             <TrendingUp className="w-5 h-5" style={{ color: '#0F766E' }} />
             <p className="text-gray-600">Revenue</p>
           </div>
-          <p className="text-3xl" style={{ color: '#0F766E' }}>${totalRevenue.toFixed(2)}</p>
+          <p className="text-3xl" style={{ color: '#0F766E' }}>{totalRevenue.toFixed(2)} DZ</p>
         </Card>
         <Card className="p-6 rounded-2xl">
           <div className="flex items-center gap-3 mb-2">
@@ -155,7 +155,7 @@ export function AdminOrders() {
                   <td className="p-4 text-gray-700 text-sm">{new Date(order.createdAt).toLocaleString()}</td>
                   <td className="p-4 text-gray-700">{order.items?.length || 0}</td>
                   <td className="p-4">
-                    <p className="text-lg" style={{ color: '#0F766E' }}>${order.totalAmount?.toFixed(2)}</p>
+                    <p className="text-lg" style={{ color: '#0F766E' }}>{order.totalAmount?.toFixed(2)} DZ</p>
                   </td>
                   <td className="p-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${

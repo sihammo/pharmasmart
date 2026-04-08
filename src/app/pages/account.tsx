@@ -840,13 +840,13 @@ export function AccountPage() {
                           {order.items.map((item: any, idx: number) => (
                             <div key={idx} className="flex items-center justify-between text-sm">
                               <span className="text-gray-600">{item.name} <span className="text-gray-300 ml-1">x{item.quantity}</span></span>
-                              <span className="font-bold text-gray-800">${(item.price * item.quantity).toFixed(2)}</span>
+                              <span className="font-bold text-gray-800">{(item.price * item.quantity).toFixed(2)} DZ</span>
                             </div>
                           ))}
                         </div>
                         <div className="flex items-center justify-between pt-4 border-t border-dashed border-gray-100">
                           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Value</span>
-                          <span className="text-lg font-bold text-[#0F766E]">${order.totalAmount.toFixed(2)}</span>
+                          <span className="text-lg font-bold text-[#0F766E]">{order.totalAmount.toFixed(2)} DZ</span>
                         </div>
                       </div>
                     ))}

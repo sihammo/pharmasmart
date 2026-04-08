@@ -99,7 +99,7 @@ export function MedicinesPage() {
               </div>
               <div className="space-y-8">
                  <div className="flex justify-between items-center">
-                    <Label className="text-xl font-bold" style={{ color: '#0F766E' }}>Max Price: ${priceRange[1]}</Label>
+                    <Label className="text-xl font-bold" style={{ color: '#0F766E' }}>Max Price: {priceRange[1]} DZ</Label>
                     <div className="flex items-center gap-3">
                       <Checkbox 
                         id="stock" 
@@ -174,7 +174,7 @@ export function MedicinesPage() {
                     <div className="flex items-center justify-between pt-4 border-t border-teal-50">
                        <div>
                           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Price</p>
-                          <p className="text-3xl font-black" style={{ color: '#0F766E' }}>${medicine.price.toFixed(2)}</p>
+                          <p className="text-3xl font-black" style={{ color: '#0F766E' }}>{medicine.price.toFixed(2)} DZ</p>
                        </div>
                        <Button 
                           onClick={() => {

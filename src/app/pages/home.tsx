@@ -89,7 +89,7 @@ export function HomePage() {
               </div>
               <div>
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Total Revenue</p>
-                <h3 className="text-3xl font-black text-gray-800">${stats.totalRevenue.toFixed(2)}</h3>
+                <h3 className="text-3xl font-black text-gray-800">{stats.totalRevenue.toFixed(2)} DZ</h3>
               </div>
             </div>
             <p className="text-sm text-gray-400">Total volume processed</p>
@@ -297,7 +297,7 @@ export function HomePage() {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-2xl font-bold text-gray-800">{med.name}</h3>
-                    <span className="text-3xl font-black text-[#0F766E]">${med.price?.toFixed(2)}</span>
+                    <span className="text-3xl font-black text-[#0F766E]">{med.price?.toFixed(2)} DZ</span>
                   </div>
                   <p className="text-gray-500 line-clamp-3 leading-relaxed text-sm">{med.description || "Premium pharmaceutical product verified by health experts."}</p>
                 </div>

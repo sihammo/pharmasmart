@@ -134,7 +134,7 @@ export function AdminMedicines() {
                </div>
                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Price ($)</Label>
+                    <Label>Price (DZ)</Label>
                     <Input type="number" value={newMedicine.price} onChange={e => setNewMedicine({...newMedicine, price: parseFloat(e.target.value)})} className="rounded-xl border-2" />
                   </div>
                   <div className="space-y-2">
@@ -198,7 +198,7 @@ export function AdminMedicines() {
                           <p className="font-black text-gray-700">{med.stockQuantity} Units</p>
                        </div>
                     </td>
-                    <td className="px-6 py-4 font-bold text-teal-900 text-lg">${med.price.toFixed(2)}</td>
+                    <td className="px-6 py-4 font-bold text-teal-900 text-lg">{med.price.toFixed(2)} DZ</td>
                     <td className="px-6 py-4">
                        <div className="flex gap-2">
                           <Button variant="ghost" size="icon" className="rounded-lg hover:bg-teal-100 text-[#0F766E]"><Edit2 className="w-4 h-4" /></Button>
