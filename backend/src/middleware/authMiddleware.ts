@@ -34,3 +34,11 @@ export const adminOnly = (req: AuthRequest, res: Response, next: NextFunction) =
     res.status(403).json({ message: "Not authorized as an admin" });
   }
 };
+
+export const customerOnly = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.user && req.user.role === "CUSTOMER") {
+    next();
+  } else {
+    res.status(403).json({ message: "Not authorized. Only customers can perform this action." });
+  }
+};
