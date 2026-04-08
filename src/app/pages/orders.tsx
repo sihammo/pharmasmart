@@ -7,8 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { apiClient } from "../api/client";
 import { toast } from "sonner";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 export function OrdersPage() {
+  const { user } = useAuth();
   const { cartItems, removeFromCart, updateQuantity, clearCart, subtotal } = useCart();
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +45,8 @@ export function OrdersPage() {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const data = await apiClient("/orders/myorders");
+      const endpoint = user?.role === "PHARMACY_OWNER" ? "/orders/incoming" : "/orders/myorders";
+      const data = await apiClient(endpoint);
       setOrders(data);
     } catch (error: any) {
       toast.error("Failed to load order history");
@@ -239,7 +242,7 @@ export function OrdersPage() {
 
                   <Button 
                     onClick={handleCheckout} 
-                    disabled={isCheckingOut || isUploading || (requiresPrescription && !prescriptionUrl)}
+                    disabled={isCheckingOut || isUploading || (requiresPrescription && !prescriptionUrl) || user?.role !== "CUSTOMER"}
                     className="w-full h-14 text-lg bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-xl mt-8 shadow-lg shadow-teal-900/20"
                   >
                     {isCheckingOut ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</> : "Complete Checkout"}

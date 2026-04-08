@@ -10,10 +10,12 @@ import { Slider } from "../components/ui/slider";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 const categories = ["All", "Pain Relief", "Antibiotics", "Vitamins", "Allergy"];
 
 export function MedicinesPage() {
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const [medicines, setMedicines] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -183,7 +185,7 @@ export function MedicinesPage() {
                             };
                             addToCart(itemToAdd);
                           }}
-                          disabled={medicine.stockQuantity <= 0}
+                          disabled={medicine.stockQuantity <= 0 || user?.role !== "CUSTOMER"}
                           className="bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-2xl h-14 px-8 shadow-lg shadow-teal-900/10 active:scale-95 transition-all"
                        >
                           <ShoppingCart className="w-5 h-5 mr-2" />

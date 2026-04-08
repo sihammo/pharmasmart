@@ -97,6 +97,21 @@ export const getPharmacyOrders = async (req: Request | any, res: Response) => {
   }
 };
 
+export const getIncomingOrders = async (req: Request | any, res: Response) => {
+  try {
+    const pharmacy = await Pharmacy.findOne({ ownerId: req.user._id });
+    if (!pharmacy) {
+      return res.status(404).json({ message: "No pharmacy associated with this account" });
+    }
+    const orders = await Order.find({ pharmacyId: pharmacy._id })
+      .populate("userId", "name email phone")
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error: any) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 export const updateOrderStatus = async (req: Request | any, res: Response) => {
   try {
     const order = await Order.findById(req.params.id);
