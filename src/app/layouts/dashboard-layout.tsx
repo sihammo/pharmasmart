@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
-import { Package, Home, MapPin, Pill, Heart, ShoppingCart, User, Search, Bell, Menu, X, LogOut } from "lucide-react";
+import { Package, Home, MapPin, Pill, Heart, ShoppingCart, User, Bell, Menu, X, LogOut } from "lucide-react";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { apiClient } from "../api/client";
