@@ -73,7 +73,7 @@ export function DashboardLayout() {
       { path: "/dashboard/medicines", icon: Pill, label: "Medicines" },
       { path: "/dashboard/health-packs", icon: Heart, label: "Health Packs" },
     ] : []),
-    { path: "/dashboard/orders", icon: ShoppingCart, label: "Orders" },
+    { path: "/dashboard/orders", icon: ShoppingCart, label: user?.role === "PHARMACY_OWNER" ? "Client Orders" : "Orders" },
     { path: "/dashboard/account", icon: User, label: "Account" },
     { path: "/dashboard/profile", icon: User, label: "Settings" },
   ];
