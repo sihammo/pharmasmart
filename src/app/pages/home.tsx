@@ -5,15 +5,29 @@ import { MapPin, Clock, Phone, Heart, Package, Navigation } from "lucide-react";
 import { Link } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { apiClient } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 
 export function HomePage() {
+  const { user } = useAuth();
   const [pharmacies, setPharmacies] = useState<any[]>([]);
   const [medicines, setMedicines] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({ totalOrders: 0, pendingOrders: 0, totalRevenue: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        if (user?.role === "PHARMACY_OWNER") {
+          const incomingOrders = await apiClient("/orders/incoming");
+          const total = incomingOrders.reduce((acc: number, o: any) => acc + (o.totalAmount || 0), 0);
+          const pending = incomingOrders.filter((o: any) => o.status === "PENDING").length;
+          setStats({
+            totalOrders: incomingOrders.length,
+            pendingOrders: pending,
+            totalRevenue: total
+          });
+        }
+        
         const [pharmsData, medsData] = await Promise.all([
           apiClient("/pharmacies"),
           apiClient("/medicines")
@@ -27,7 +41,98 @@ export function HomePage() {
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
+
+  if (user?.role === "PHARMACY_OWNER") {
+    return (
+      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+        <div className="rounded-[2rem] p-10 relative overflow-hidden shadow-2xl shadow-teal-900/20" style={{ background: 'linear-gradient(135deg, #0F766E 0%, #2F8F7E 100%)' }}>
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold text-white mb-2">Welcome back, {user.name}</h1>
+            <p className="text-teal-50/80 mb-0">Pharmacy Management Hub • {new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          <Card className="p-8 border-none shadow-xl shadow-teal-900/5 rounded-[2rem] bg-white">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 bg-teal-50 rounded-xl">
+                <Package className="w-8 h-8 text-teal-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Total Orders</p>
+                <h3 className="text-3xl font-black text-gray-800">{stats.totalOrders}</h3>
+              </div>
+            </div>
+            <Link to="/dashboard/orders">
+              <Button variant="link" className="text-teal-600 p-0 h-auto font-bold">View all orders →</Button>
+            </Link>
+          </Card>
+
+          <Card className="p-8 border-none shadow-xl shadow-teal-900/5 rounded-[2rem] bg-white">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 bg-orange-50 rounded-xl">
+                <Clock className="w-8 h-8 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Pending</p>
+                <h3 className="text-3xl font-black text-gray-800">{stats.pendingOrders}</h3>
+              </div>
+            </div>
+            <p className="text-sm text-gray-400">Requires your attention</p>
+          </Card>
+
+          <Card className="p-8 border-none shadow-xl shadow-teal-900/5 rounded-[2rem] bg-white">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 bg-green-50 rounded-xl">
+                <Navigation className="w-8 h-8 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Total Revenue</p>
+                <h3 className="text-3xl font-black text-gray-800">${stats.totalRevenue.toFixed(2)}</h3>
+              </div>
+            </div>
+            <p className="text-sm text-gray-400">Total volume processed</p>
+          </Card>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          <Card className="p-8 rounded-[2rem] border-none shadow-xl shadow-teal-900/5 bg-white">
+             <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-800">Operational Tools</h3>
+             </div>
+             <div className="grid grid-cols-2 gap-4">
+                <Link to="/dashboard/account" className="p-4 rounded-2xl bg-teal-50 hover:bg-teal-100 transition-colors group">
+                   <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                      <MapPin className="w-5 h-5 text-teal-600" />
+                   </div>
+                   <p className="font-bold text-teal-900">Manage Location</p>
+                   <p className="text-xs text-teal-600/60">Update map visibility</p>
+                </Link>
+                <Link to="/dashboard/profile" className="p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors group">
+                   <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                      <Clock className="w-5 h-5 text-gray-600" />
+                   </div>
+                   <p className="font-bold text-gray-900">Working Hours</p>
+                   <p className="text-xs text-gray-400">Update availability</p>
+                </Link>
+             </div>
+          </Card>
+
+          <Card className="p-8 rounded-[2rem] border-none shadow-xl shadow-teal-900/5 bg-white flex items-center justify-center text-center">
+             <div>
+                <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                   <Heart className="w-10 h-10 text-teal-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Need Assistance?</h3>
+                <p className="text-gray-500 text-sm mb-6">Contact the PharmaSmart Support <br/>team for technical issues.</p>
+                <Button variant="outline" className="rounded-xl border-teal-200 text-teal-700 font-bold">Open Support Ticket</Button>
+             </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
