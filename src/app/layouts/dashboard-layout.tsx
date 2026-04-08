@@ -17,7 +17,7 @@ export function DashboardLayout() {
 
   useEffect(() => {
     if (!user) {
-       navigate("/login");
+       navigate("/");
        return;
     }
 
@@ -105,9 +105,7 @@ export function DashboardLayout() {
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </Button>
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
-                <Package className="w-6 h-6 text-white" />
-              </div>
+              <img src="/logo.jpg" alt="PharmaSmart" className="w-10 h-10 object-contain rounded-lg bg-white" />
               <span className="text-xl hidden sm:inline" style={{ color: '#0F766E' }}>MediCare+</span>
             </Link>
           </div>
@@ -188,9 +186,7 @@ export function DashboardLayout() {
               <div className="p-4">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
-                      <Package className="w-6 h-6 text-white" />
-                    </div>
+                    <img src="/logo.jpg" alt="PharmaSmart" className="w-10 h-10 object-contain rounded-lg bg-white shadow-sm" />
                     <span className="text-xl" style={{ color: '#0F766E' }}>MediCare+</span>
                   </div>
                   <Button

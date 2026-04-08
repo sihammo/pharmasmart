@@ -12,7 +12,7 @@ export function AdminLayout() {
 
   useEffect(() => {
     if (!user || user.role !== "ADMIN") {
-      navigate("/login");
+      navigate("/");
     }
   }, [user, navigate]);
 
@@ -50,9 +50,7 @@ export function AdminLayout() {
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </Button>
             <Link to="/admin" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: '#0F766E' }}>
-                <Package className="w-6 h-6 text-white" />
-              </div>
+              <img src="/logo.jpg" alt="PharmaSmart" className="w-10 h-10 object-contain rounded-lg bg-white" />
               <div className="flex flex-col">
                 <span className="text-xl font-black tracking-tight leading-none" style={{ color: '#0F766E' }}>PHARMA<span className="text-teal-400">SMART</span></span>
                 <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mt-1">Management Cluster</span>
@@ -121,9 +119,7 @@ export function AdminLayout() {
               <div className="p-4">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
-                      <Package className="w-6 h-6 text-white" />
-                    </div>
+                    <img src="/logo.jpg" alt="PharmaSmart" className="w-10 h-10 object-contain rounded-lg bg-white shadow-sm" />
                     <span className="text-xl" style={{ color: '#0F766E' }}>Admin Panel</span>
                   </div>
                   <Button

@@ -21,9 +21,7 @@ export function LandingPage() {
       <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
-              <Package className="w-6 h-6 text-white" />
-            </div>
+            <img src="/logo.jpg" alt="PharmaSmart" className="w-10 h-10 object-contain rounded-lg" />
             <span className="text-xl" style={{ color: '#0F766E' }}>MediCare+</span>
           </div>
           <div className="flex items-center gap-4">
@@ -178,9 +176,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0F766E' }}>
-                <Package className="w-6 h-6 text-white" />
-              </div>
+              <img src="/logo.jpg" alt="PharmaSmart" className="w-10 h-10 object-contain rounded-lg" />
               <span className="text-xl" style={{ color: '#0F766E' }}>MediCare+</span>
             </div>
             <p className="text-gray-600">

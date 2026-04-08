@@ -53,9 +53,7 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#B7D1CC' }}>
       <Card className="w-full max-w-md p-8 rounded-2xl shadow-2xl">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: '#0F766E' }}>
-            <Package className="w-10 h-10 text-white" />
-          </div>
+          <img src="/logo.jpg" alt="PharmaSmart" className="w-24 h-24 object-contain mb-2 rounded-2xl shadow-sm" />
           <h1 className="text-3xl" style={{ color: '#0F766E' }}>
             Welcome Back
           </h1>
