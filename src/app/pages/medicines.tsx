@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Search, Filter, ShoppingCart, Pill, ChevronRight, Star } from "lucide-react";
+import { Search, Filter, ShoppingCart, Pill, ChevronRight, Star, Loader2 } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Slider } from "../components/ui/slider";
 import { Label } from "../components/ui/label";
@@ -24,6 +24,7 @@ export function MedicinesPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMedicines = async () => {
@@ -178,18 +179,25 @@ export function MedicinesPage() {
                        </div>
                        <Button 
                           onClick={() => {
-                            const itemToAdd = {
-                              ...medicine,
-                              pharmacyId: medicine.pharmacyId?._id || medicine.pharmacyId,
-                              pharmacyName: medicine.pharmacyId?.name || "Unknown Pharmacy"
-                            };
-                            addToCart(itemToAdd);
+                            setAddingId(medicine._id);
+                            setTimeout(() => {
+                              const itemToAdd = {
+                                ...medicine,
+                                pharmacyId: medicine.pharmacyId?._id || medicine.pharmacyId,
+                                pharmacyName: medicine.pharmacyId?.name || "Unknown Pharmacy"
+                              };
+                              addToCart(itemToAdd);
+                              setAddingId(null);
+                            }, 800);
                           }}
-                          disabled={medicine.stockQuantity <= 0 || user?.role !== "CUSTOMER"}
+                          disabled={medicine.stockQuantity <= 0 || user?.role !== "CUSTOMER" || addingId === medicine._id}
                           className="bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-2xl h-14 px-8 shadow-lg shadow-teal-900/10 active:scale-95 transition-all"
                        >
-                          <ShoppingCart className="w-5 h-5 mr-2" />
-                          Add to Cart
+                          {addingId === medicine._id ? (
+                            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Adding...</>
+                          ) : (
+                            <><ShoppingCart className="w-5 h-5 mr-2" /> Add to Cart</>
+                          )}
                        </Button>
                     </div>
                  </div>

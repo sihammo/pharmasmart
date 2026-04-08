@@ -1,6 +1,6 @@
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { ShoppingCart, Heart, Check } from "lucide-react";
+import { ShoppingCart, Heart, Check, Loader2 } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -126,6 +126,7 @@ const healthPacks = [
 
 export function HealthPacksPage() {
   const [dbPacks, setDbPacks] = useState<any[]>([]);
+  const [addingId, setAddingId] = useState<string | null>(null);
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -145,10 +146,14 @@ export function HealthPacksPage() {
       toast.info("This is a demo pack. Pharmacies manage real packs in their inventory!");
       return;
     }
-    addToCart({
-      ...pack.original,
-      quantity: 1
-    });
+    setAddingId(pack.id);
+    setTimeout(() => {
+      addToCart({
+        ...pack.original,
+        quantity: 1
+      });
+      setAddingId(null);
+    }, 800);
   };
 
   const displayPacks = dbPacks.length > 0 
@@ -228,10 +233,14 @@ export function HealthPacksPage() {
 
                 <Button 
                   onClick={() => handleAddToCart(pack)}
+                  disabled={addingId === pack.id}
                   className="w-full h-12 text-lg bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg"
                 >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  Add to Cart
+                  {addingId === pack.id ? (
+                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Adding...</>
+                  ) : (
+                    <><ShoppingCart className="w-5 h-5 mr-2" /> Add to Cart</>
+                  )}
                 </Button>
               </div>
             </Card>
@@ -285,10 +294,14 @@ export function HealthPacksPage() {
 
                 <Button 
                   onClick={() => handleAddToCart(pack)}
+                  disabled={addingId === pack.id}
                   className="w-full bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-lg"
                 >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Add to Cart
+                  {addingId === pack.id ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Adding...</>
+                  ) : (
+                    <><ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart</>
+                  )}
                 </Button>
               </div>
             </Card>

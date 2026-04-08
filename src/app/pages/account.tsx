@@ -5,7 +5,7 @@ import { Separator } from "../components/ui/separator";
 import { 
   User, Mail, Phone, MapPin, Calendar, CreditCard, 
   Package, Heart, Shield, Edit, Save, X, Plus, Trash2,
-  Clock, Star, ExternalLink
+  Clock, Star, ExternalLink, Loader2
 } from "lucide-react";
 import { apiClient } from "../api/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "../components/ui/dialog";
@@ -93,6 +93,7 @@ export function AccountPage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingHealth, setIsEditingHealth] = useState(false);
   const [isEditingPharmacy, setIsEditingPharmacy] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [profileForm, setProfileForm] = useState({ name: "", phone: "", address: "" });
   const [healthForm, setHealthForm] = useState<HealthProfile | null>(null);
@@ -128,6 +129,7 @@ export function AccountPage() {
   }, [user]);
 
   const handleAddMedicine = async () => {
+    setIsSaving(true);
     try {
       const isEditing = !!editingMed;
       const endpoint = isEditing ? `/medicines/${editingMed._id}` : "/medicines";
@@ -157,6 +159,8 @@ export function AccountPage() {
       });
     } catch (error: any) {
       toast.error(error.message || "Failed to save medicine.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -212,6 +216,7 @@ export function AccountPage() {
   };
 
   const handleUpdateProfile = async () => {
+    setIsSaving(true);
     try {
       const updated = await apiClient("/auth/profile", {
         method: "PUT",
@@ -222,10 +227,13 @@ export function AccountPage() {
       toast.success("Profile updated successfully");
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdateHealth = async () => {
+    setIsSaving(true);
     try {
       const updated = await apiClient("/auth/profile", {
         method: "PUT",
@@ -236,10 +244,13 @@ export function AccountPage() {
       toast.success("Health profile updated successfully");
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdatePharmacy = async () => {
+    setIsSaving(true);
     try {
       const isNew = !pharmacy;
       const endpoint = isNew ? "/pharmacies" : "/pharmacies/my-pharmacy";
