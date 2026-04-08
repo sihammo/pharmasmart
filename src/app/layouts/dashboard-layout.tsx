@@ -6,15 +6,20 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { apiClient } from "../api/client";
 import { io } from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
 
 export function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Fetch from localStorage
-  const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : null;
+  useEffect(() => {
+    if (!user) {
+       navigate("/login");
+       return;
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     if (user?.role === "PHARMACY_OWNER") {
@@ -50,10 +55,8 @@ export function DashboardLayout() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    logout();
     toast.info("Logged out successfully");
-    navigate("/login");
   };
 
   const navItems = [

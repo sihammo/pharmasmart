@@ -1,11 +1,22 @@
-import { Outlet, Link, useLocation } from "react-router";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { Package, LayoutDashboard, Users, ShoppingBag, Pill, MapPin, BarChart3, Settings, Menu, X, LogOut } from "lucide-react";
 import { Button } from "../components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user || user.role !== "ADMIN") {
+      navigate("/login");
+    }
+  }, [user, navigate]);
+
+  if (!user || user.role !== "ADMIN") return null;
 
   const navItems = [
     { path: "/admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -23,8 +34,6 @@ export function AdminLayout() {
     }
     return location.pathname.startsWith(path);
   };
-
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -59,11 +68,14 @@ export function AdminLayout() {
             <div className="h-10 w-10 rounded-full bg-teal-50 border-2 border-teal-100 flex items-center justify-center text-teal-700 font-bold overflow-hidden shadow-sm">
                {user.name?.charAt(0) || "A"}
             </div>
-            <Link to="/login" onClick={() => localStorage.clear()}>
-              <Button variant="ghost" size="icon" className="hover:bg-red-50 hover:text-red-500 rounded-full transition-colors">
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"
+              onClick={logout}
+            >
+              <LogOut className="w-5 h-5" />
+            </Button>
           </div>
         </div>
       </header>

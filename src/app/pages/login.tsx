@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -8,12 +8,21 @@ import { Package } from "lucide-react";
 
 import { apiClient } from "../api/client";
 import { toast } from "sonner";
+import { useAuth } from "../context/AuthContext";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { user, login } = useAuth();
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      navigate(user.role === "ADMIN" ? "/admin" : "/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +34,7 @@ export function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data));
+      login(data);
       toast.success("Logged in successfully!");
       
       if (data.role === "ADMIN") {

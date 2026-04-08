@@ -1,10 +1,20 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { MapPin, Search, Package, ArrowRight } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { useAuth } from "../context/AuthContext";
+import { useEffect } from "react";
 
 export function LandingPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate(user.role === "ADMIN" ? "/admin" : "/dashboard");
+    }
+  }, [user, navigate]);
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
