@@ -186,9 +186,9 @@ export function AdminMedicines() {
                        <p className="font-bold text-[#0F766E] text-lg">{med.name}</p>
                         <p className="text-xs text-gray-400 font-semibold">
                           {med.category} • Assign: {
-                            typeof med.pharmacyId === 'object' 
+                            (med.pharmacyId && typeof med.pharmacyId === 'object')
                               ? med.pharmacyId.name 
-                              : (pharmacies.find(p => p._id === med.pharmacyId)?.name || med.pharmacyId)
+                              : (pharmacies.find(p => p._id === med.pharmacyId)?.name || med.pharmacyId || "N/A")
                           }
                         </p>
                     </td>
