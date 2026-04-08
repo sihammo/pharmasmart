@@ -277,8 +277,17 @@ export function OrdersPage() {
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pharmacy</p>
-                      <p className="font-bold text-teal-700">{order.pharmacyId?.name || "Marketplace"}</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        {user?.role === "PHARMACY_OWNER" ? "Client" : "Pharmacy"}
+                      </p>
+                      <p className="font-bold text-teal-700">
+                        {user?.role === "PHARMACY_OWNER" 
+                          ? order.userId?.name 
+                          : (order.pharmacyId?.name || "Marketplace")}
+                      </p>
+                      {user?.role === "PHARMACY_OWNER" && (
+                        <p className="text-[10px] text-gray-400 font-mono">{order.userId?.email || order.userId?.phone}</p>
+                      )}
                     </div>
                     <div className="flex flex-col items-end">
                       <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${

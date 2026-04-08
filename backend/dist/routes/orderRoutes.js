@@ -11,6 +11,7 @@ router.route("/")
     .post(authMiddleware_1.protect, authMiddleware_1.customerOnly, orderController_1.createOrder)
     .get(authMiddleware_1.protect, authMiddleware_1.adminOnly, orderController_1.getAllOrders);
 router.get("/myorders", authMiddleware_1.protect, orderController_1.getUserOrders);
+router.get("/incoming", authMiddleware_1.protect, orderController_1.getIncomingOrders);
 router.get("/pharmacy/:pharmacyId", authMiddleware_1.protect, orderController_1.getPharmacyOrders);
 router.put("/:id/status", authMiddleware_1.protect, orderController_1.updateOrderStatus);
 exports.default = router;

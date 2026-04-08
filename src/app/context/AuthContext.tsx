@@ -37,9 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         apiClient("/auth/profile").then(updatedUser => {
            setUser(updatedUser);
            localStorage.setItem("user", JSON.stringify(updatedUser));
-        }).catch(() => {
-           // If profile fetch fails, token might be expired
-           logout();
+        }).catch(err => {
+           console.error("Profile sync failed:", err);
+           // Only logout if explicitly unauthorized, not on network error
+           if (err.message.includes("401") || err.message.includes("Unauthorized")) {
+             logout();
+           }
         });
       } catch (e) {
         logout();

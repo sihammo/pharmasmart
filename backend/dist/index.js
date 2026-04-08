@@ -15,25 +15,35 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const http_1 = require("http");
+const path_1 = __importDefault(require("path"));
 const db_1 = require("./config/db");
+const socket_1 = require("./socket");
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const pharmacyRoutes_1 = __importDefault(require("./routes/pharmacyRoutes"));
 const medicineRoutes_1 = __importDefault(require("./routes/medicineRoutes"));
 const orderRoutes_1 = __importDefault(require("./routes/orderRoutes"));
+const uploadRoutes_1 = __importDefault(require("./routes/uploadRoutes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+const httpServer = (0, http_1.createServer)(app);
+// Initialize Socket.io
+(0, socket_1.initSocket)(httpServer);
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
+// Serve uploaded files statically
+app.use("/uploads", express_1.default.static(path_1.default.join(__dirname, "../../uploads")));
 // Routes
 app.use("/api/auth", authRoutes_1.default);
 app.use("/api/pharmacies", pharmacyRoutes_1.default);
 app.use("/api/medicines", medicineRoutes_1.default);
 app.use("/api/orders", orderRoutes_1.default);
+app.use("/api/upload", uploadRoutes_1.default);
 app.get("/", (req, res) => {
     res.send("PharmaSmart API is running...");
 });
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => __awaiter(void 0, void 0, void 0, function* () {
+httpServer.listen(PORT, () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, db_1.connectDB)();
     console.log(`🚀 Server running on port ${PORT}`);
 }));

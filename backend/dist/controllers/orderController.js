@@ -12,13 +12,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateOrderStatus = exports.getPharmacyOrders = exports.getAllOrders = exports.getUserOrders = exports.createOrder = void 0;
+exports.updateOrderStatus = exports.getIncomingOrders = exports.getPharmacyOrders = exports.getAllOrders = exports.getUserOrders = exports.createOrder = void 0;
 const Order_1 = __importDefault(require("../models/Order"));
 const Medicine_1 = __importDefault(require("../models/Medicine"));
 const Pharmacy_1 = __importDefault(require("../models/Pharmacy"));
+const socket_1 = require("../socket");
 const createOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { pharmacyId, items, totalAmount, prescriptionUrl } = req.body;
+        if (req.user.role !== "CUSTOMER") {
+            res.status(403).json({ message: "Only customers can place new orders" });
+            return;
+        }
         if (!items || items.length === 0) {
             res.status(400).json({ message: "No order items" });
             return;
@@ -50,6 +55,13 @@ const createOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             yield Medicine_1.default.findByIdAndUpdate(item.medicineId, {
                 $inc: { stockQuantity: -item.quantity }
             });
+        }
+        // 3. Emit real-time notification to the Pharmacy
+        try {
+            (0, socket_1.getIO)().to(pharmacyId).emit("new_order", createdOrder);
+        }
+        catch (socketError) {
+            console.error("Socket error on order creation:", socketError);
         }
         res.status(201).json(createdOrder);
     }
@@ -95,6 +107,22 @@ const getPharmacyOrders = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getPharmacyOrders = getPharmacyOrders;
+const getIncomingOrders = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const pharmacy = yield Pharmacy_1.default.findOne({ ownerId: req.user._id });
+        if (!pharmacy) {
+            return res.status(404).json({ message: "No pharmacy associated with this account" });
+        }
+        const orders = yield Order_1.default.find({ pharmacyId: pharmacy._id })
+            .populate("userId", "name email phone")
+            .sort({ createdAt: -1 });
+        res.json(orders);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+exports.getIncomingOrders = getIncomingOrders;
 const updateOrderStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const order = yield Order_1.default.findById(req.params.id);

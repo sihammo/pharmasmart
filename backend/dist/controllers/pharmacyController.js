@@ -16,7 +16,24 @@ exports.updateMyPharmacy = exports.getMyPharmacy = exports.deletePharmacy = expo
 const Pharmacy_1 = __importDefault(require("../models/Pharmacy"));
 const getPharmacies = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const pharmacies = yield Pharmacy_1.default.find();
+        const { lat, lng, maxDistance = 50000 } = req.query;
+        let pharmacies;
+        if (lat && lng) {
+            pharmacies = yield Pharmacy_1.default.find({
+                location: {
+                    $near: {
+                        $geometry: {
+                            type: "Point",
+                            coordinates: [parseFloat(lng), parseFloat(lat)]
+                        },
+                        $maxDistance: parseInt(maxDistance) // in meters
+                    }
+                }
+            });
+        }
+        else {
+            pharmacies = yield Pharmacy_1.default.find();
+        }
         res.json(pharmacies);
     }
     catch (error) {
