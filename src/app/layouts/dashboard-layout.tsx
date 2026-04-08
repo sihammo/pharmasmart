@@ -19,7 +19,14 @@ export function DashboardLayout() {
        navigate("/login");
        return;
     }
-  }, [user, navigate]);
+
+    // Role-based route protection
+    const customerOnlyPaths = ["/dashboard/pharmacies", "/dashboard/medicines", "/dashboard/health-packs"];
+    if (user.role !== "CUSTOMER" && customerOnlyPaths.some(p => location.pathname.startsWith(p))) {
+      navigate("/dashboard");
+      toast.error("Account restricted to management view only.");
+    }
+  }, [user, navigate, location.pathname]);
 
   useEffect(() => {
     if (user?.role === "PHARMACY_OWNER") {

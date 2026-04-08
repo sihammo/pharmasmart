@@ -8,6 +8,11 @@ export const createOrder = async (req: Request | any, res: Response) => {
   try {
     const { pharmacyId, items, totalAmount, prescriptionUrl } = req.body;
     
+    if (req.user.role !== "CUSTOMER") {
+      res.status(403).json({ message: "Only customers can place new orders" });
+      return;
+    }
+
     if (!items || items.length === 0) {
       res.status(400).json({ message: "No order items" });
       return;

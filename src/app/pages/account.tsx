@@ -12,6 +12,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+const DefaultIcon = L.icon({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 interface HealthProfile {
   conditions: string[];
@@ -687,7 +705,7 @@ export function AccountPage() {
                   </Dialog>
                 </div>
                 
-                {pharmacy ? (
+                {pharmacy ? (<>
                   <div className="grid md:grid-cols-2 gap-x-12 gap-y-10 mt-4">
                     <div className="space-y-4">
                       <div className="flex items-start gap-4">
@@ -731,10 +749,31 @@ export function AccountPage() {
                          <div>
                            <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Contact Phone</p>
                            <p className="text-sm font-semibold text-gray-700">{pharmacy.phone}</p>
-                         </div>
-                      </div>
+                          </div>
+                       </div>
                     </div>
                   </div>
+                    <div className="mt-8 h-48 rounded-2xl overflow-hidden border-2 border-teal-50 shadow-inner group relative">
+                      <MapContainer 
+                        center={[pharmacy.location.coordinates[1], pharmacy.location.coordinates[0]]} 
+                        zoom={15} 
+                        style={{ height: "100%", width: "100%" }}
+                        zoomControl={false}
+                        scrollWheelZoom={false}
+                        dragging={false}
+                        touchZoom={false}
+                        doubleClickZoom={false}
+                      >
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <Marker position={[pharmacy.location.coordinates[1], pharmacy.location.coordinates[0]]}>
+                           <Popup>{pharmacy.name}</Popup>
+                        </Marker>
+                      </MapContainer>
+                      <div className="absolute inset-x-0 bottom-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform bg-white/80 backdrop-blur-md">
+                         <p className="text-[10px] text-teal-800 font-bold text-center">Location verified via GPS coordinates</p>
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <div className="p-12 text-center border-2 border-dashed border-teal-100 rounded-[2rem] bg-teal-50/20">
                     <Package className="w-12 h-12 text-teal-200 mx-auto mb-4" />

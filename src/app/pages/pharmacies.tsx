@@ -93,8 +93,8 @@ export function PharmaciesPage() {
         <Card className="p-4 rounded-2xl overflow-hidden shadow-xl border-2 border-[#B7D1CC]/30">
           <div className="h-[600px] w-full rounded-xl overflow-hidden relative z-0">
              <MapContainer 
-              center={[40.7128, -74.0060]} 
-              zoom={12} 
+              center={[36.7538, 3.0588]} 
+              zoom={13} 
               style={{ height: "100%", width: "100%" }}
             >
               <TileLayer
