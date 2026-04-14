@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { apiClient } from "../api/client";
 import { toast } from "sonner";
 import { Card } from "../components/ui/card";
@@ -17,6 +18,9 @@ const categories = ["All", "Pain Relief", "Antibiotics", "Vitamins", "Allergy"];
 export function MedicinesPage() {
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const pharmacyIdParam = searchParams.get("pharmacyId");
+  
   const [medicines, setMedicines] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,15 +50,30 @@ export function MedicinesPage() {
     const matchesPrice = medicine.price >= priceRange[0] && medicine.price <= priceRange[1];
     const matchesStock = !inStockOnly || medicine.stockQuantity > 0;
     
-    return matchesSearch && matchesCategory && matchesPrice && matchesStock;
+    // Logic for pharmacy filter
+    const pharmacyId = medicine.pharmacyId?._id || medicine.pharmacyId;
+    const matchesPharmacy = !pharmacyIdParam || pharmacyId === pharmacyIdParam;
+    
+    return matchesSearch && matchesCategory && matchesPrice && matchesStock && matchesPharmacy;
   });
+
+  const selectedPharmacyName = filteredMedicines.length > 0 && pharmacyIdParam 
+    ? (filteredMedicines[0].pharmacyId?.name || "Selected Pharmacy")
+    : null;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <div>
         <h1 className="text-4xl font-bold mb-2" style={{ color: '#0F766E' }}>Search Medicines</h1>
-        <p className="text-xl text-gray-600">Find and compare thousands of medicines</p>
+        <div className="flex items-center gap-3">
+          <p className="text-xl text-gray-600">Find and compare thousands of medicines</p>
+          {selectedPharmacyName && (
+            <div className="bg-teal-50 text-[#0F766E] px-3 py-1 rounded-full text-sm font-bold border border-teal-100 animate-in zoom-in">
+              at {selectedPharmacyName}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4">

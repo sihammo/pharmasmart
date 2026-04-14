@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router";
 import { apiClient } from "../api/client";
 import { toast } from "sonner";
 import { Card } from "../components/ui/card";
@@ -194,12 +195,14 @@ export function PharmaciesPage() {
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <Button 
-                      className="flex-1 bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-xl h-11"
-                    >
-                      <Navigation className="w-4 h-4 mr-2" />
-                      Visit Store
-                    </Button>
+                    <Link to={`/dashboard/medicines?pharmacyId=${pharmacy._id}`} className="flex-1">
+                      <Button 
+                        className="w-full bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-xl h-11"
+                      >
+                        <Navigation className="w-4 h-4 mr-2" />
+                        Visit Store
+                      </Button>
+                    </Link>
                     <Button 
                       variant="outline" 
                       size="icon"

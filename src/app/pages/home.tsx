@@ -6,9 +6,11 @@ import { Link } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { apiClient } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 export function HomePage() {
   const { user, isLoading: authLoading } = useAuth();
+  const { addToCart } = useCart();
   const [pharmacies, setPharmacies] = useState<any[]>([]);
   const [medicines, setMedicines] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -181,13 +183,15 @@ export function HomePage() {
           </Card>
         </Link>
 
-        <Card className="p-8 hover:shadow-2xl transition-all duration-500 cursor-pointer border-none shadow-xl shadow-teal-900/5 rounded-[2rem] bg-white group hover:-translate-y-2 lg:bg-teal-50/30">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: '#0F766E' }}>
-            <Heart className="w-8 h-8 text-white" />
-          </div>
-          <h3 className="text-2xl font-bold mb-3 text-[#0F766E]">Chronic Care</h3>
-          <p className="text-gray-500 text-lg leading-relaxed">Specialized monthly packs for diabetes, asthma, and heart health.</p>
-        </Card>
+        <Link to="/dashboard/health-packs" className="group">
+          <Card className="p-8 hover:shadow-2xl transition-all duration-500 cursor-pointer border-none shadow-xl shadow-teal-900/5 rounded-[2rem] bg-white group hover:-translate-y-2 lg:bg-teal-50/30">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: '#0F766E' }}>
+              <Heart className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold mb-3 text-[#0F766E]">Chronic Care</h3>
+            <p className="text-gray-500 text-lg leading-relaxed">Specialized monthly packs for diabetes, asthma, and heart health.</p>
+          </Card>
+        </Link>
       </div>
 
       {/* Nearby Pharmacies */}
@@ -241,10 +245,12 @@ export function HomePage() {
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <Button className="flex-1 bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-2xl h-14 font-bold shadow-lg shadow-teal-900/10">
-                    <Navigation className="w-5 h-5 mr-3" />
-                    Visit Shop
-                  </Button>
+                  <Link to={`/dashboard/medicines?pharmacyId=${pharmacy._id}`} className="flex-1">
+                    <Button className="w-full bg-[#0F766E] hover:bg-[#0d6560] text-white rounded-2xl h-14 font-bold shadow-lg shadow-teal-900/10">
+                      <Navigation className="w-5 h-5 mr-3" />
+                      Visit Shop
+                    </Button>
+                  </Link>
                   <Button 
                     variant="outline" 
                     size="icon"
@@ -310,7 +316,14 @@ export function HomePage() {
                     </span>
                   </div>
                   <Button 
-                    disabled={med.stockQuantity <= 0}
+                    disabled={med.stockQuantity <= 0 || user?.role !== "CUSTOMER"}
+                    onClick={() => {
+                      addToCart({
+                        ...med,
+                        pharmacyId: med.pharmacyId?._id || med.pharmacyId,
+                        pharmacyName: med.pharmacyId?.name || "Unknown Pharmacy"
+                      });
+                    }}
                     className="bg-[#0F766E] hover:bg-[#2F8F7E] text-white rounded-2xl px-6 h-12 font-bold shadow-lg shadow-teal-900/10 transition-transform active:scale-95"
                   >
                     Get Now
