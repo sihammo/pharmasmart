@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
-import { Package, Home, MapPin, Pill, Heart, ShoppingCart, User, Bell, Menu, X, LogOut } from "lucide-react";
+import { Package, Home, MapPin, Pill, Heart, ShoppingCart, User, Bell, Menu, X, LogOut, Stethoscope, Clipboard } from "lucide-react";
 import { Button } from "../components/ui/button";
 
 import { useState, useEffect } from "react";
@@ -23,10 +23,18 @@ export function DashboardLayout() {
     }
 
     // Role-based route protection
+    // Role-based route protection
     const customerOnlyPaths = ["/dashboard/pharmacies", "/dashboard/medicines", "/dashboard/health-packs"];
+    const doctorOnlyPaths = ["/dashboard/doctor"];
+    
     if (user.role !== "CUSTOMER" && customerOnlyPaths.some(p => location.pathname.startsWith(p))) {
       navigate("/dashboard");
       toast.error("Account restricted to management view only.");
+    }
+
+    if (user.role !== "DOCTOR" && doctorOnlyPaths.some(p => location.pathname.startsWith(p))) {
+      navigate("/dashboard");
+      toast.error("Access restricted to healthcare professionals.");
     }
   }, [user, navigate, location.pathname, isLoading]);
 
@@ -74,10 +82,15 @@ export function DashboardLayout() {
 
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Home" },
+    ...(user?.role === "DOCTOR" ? [
+      { path: "/dashboard/doctor", icon: Stethoscope, label: "Doctor Dashboard" },
+    ] : []),
     ...(user?.role === "CUSTOMER" ? [
       { path: "/dashboard/pharmacies", icon: MapPin, label: "Pharmacies" },
       { path: "/dashboard/medicines", icon: Pill, label: "Medicines" },
       { path: "/dashboard/health-packs", icon: Heart, label: "Health Packs" },
+      { path: "/dashboard/consultations", icon: Stethoscope, label: "Consultations" },
+      { path: "/dashboard/prescriptions", icon: Clipboard, label: "My Prescriptions" },
     ] : []),
     { path: "/dashboard/orders", icon: ShoppingCart, label: user?.role === "PHARMACY_OWNER" ? "Client Orders" : "Orders" },
     { path: "/dashboard/account", icon: User, label: "Account" },

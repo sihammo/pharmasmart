@@ -10,6 +10,8 @@ import { HealthPacksPage } from "./pages/health-packs";
 import { OrdersPage } from "./pages/orders";
 import { ProfilePage } from "./pages/profile";
 import { AccountPage } from "./pages/account";
+import { PatientPrescriptions } from "./pages/prescriptions";
+import { PatientConsultations } from "./pages/consultations";
 import { AdminLayout } from "./layouts/admin-layout";
 import { AdminDashboard } from "./pages/admin/dashboard";
 import { AdminUsers } from "./pages/admin/users";
@@ -17,6 +19,7 @@ import { AdminOrders } from "./pages/admin/orders";
 import { AdminMedicines } from "./pages/admin/medicines";
 import { AdminPharmacies } from "./pages/admin/pharmacies";
 import { NotFound } from "./pages/not-found";
+import { DoctorDashboard } from "./pages/doctor/dashboard";
 
 export const router = createBrowserRouter([
   {
@@ -36,10 +39,13 @@ export const router = createBrowserRouter([
     Component: DashboardLayout,
     children: [
       { index: true, Component: HomePage },
+      { path: "doctor", Component: DoctorDashboard },
       { path: "pharmacies", Component: PharmaciesPage },
       { path: "medicines", Component: MedicinesPage },
       { path: "health-packs", Component: HealthPacksPage },
       { path: "orders", Component: OrdersPage },
+      { path: "prescriptions", Component: PatientPrescriptions },
+      { path: "consultations", Component: PatientConsultations },
       { path: "profile", Component: ProfilePage },
       { path: "account", Component: AccountPage },
     ],

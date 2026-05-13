@@ -34,7 +34,9 @@ export function AdminUsers() {
     email: "",
     password: "",
     phone: "",
-    role: "CUSTOMER"
+    role: "CUSTOMER",
+    specialization: "",
+    licenseNumber: ""
   });
 
   const fetchUsers = async () => {
@@ -73,9 +75,18 @@ export function AdminUsers() {
       });
       toast.success("User created successfully");
       setIsAddUserOpen(false);
-      setNewUserData({ name: "", email: "", password: "", phone: "", role: "CUSTOMER" });
+      setNewUserData({ 
+        name: "", 
+        email: "", 
+        password: "", 
+        phone: "", 
+        role: "CUSTOMER",
+        specialization: "",
+        licenseNumber: ""
+      });
       fetchUsers();
     } catch (error: any) {
+      toast.error(error.message || "Failed to create user");
     }
   };
 
@@ -121,7 +132,7 @@ export function AdminUsers() {
             <DialogHeader>
               <DialogTitle className="text-2xl text-[#0F766E]">Add New User</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleAddUser} className="space-y-4 py-4">
+            <form onSubmit={handleAddUser} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input 
@@ -173,9 +184,36 @@ export function AdminUsers() {
                     <SelectItem value="CUSTOMER">Customer Account</SelectItem>
                     <SelectItem value="PHARMACY_OWNER">Pharmacy Owner</SelectItem>
                     <SelectItem value="ADMIN">Administrator</SelectItem>
+                    <SelectItem value="DOCTOR">Doctor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {newUserData.role === "DOCTOR" && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="specialization">Specialization</Label>
+                    <Input 
+                      id="specialization" 
+                      value={newUserData.specialization} 
+                      onChange={(e) => setNewUserData({...newUserData, specialization: e.target.value})}
+                      placeholder="Cardiologist, General Practitioner, etc." 
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="licenseNumber">License Number</Label>
+                    <Input 
+                      id="licenseNumber" 
+                      value={newUserData.licenseNumber} 
+                      onChange={(e) => setNewUserData({...newUserData, licenseNumber: e.target.value})}
+                      placeholder="LIC-123456" 
+                      required 
+                    />
+                  </div>
+                </>
+              )}
+
               <DialogFooter className="pt-4">
                 <Button type="submit" className="w-full bg-[#0F766E] hover:bg-[#0d6560] h-12 text-lg">
                   Create User Account
@@ -187,10 +225,14 @@ export function AdminUsers() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
         <Card className="p-6 rounded-2xl border-2 border-[#B7D1CC]/30">
           <p className="text-gray-600 mb-1 text-sm">Total Users</p>
           <p className="text-3xl font-bold" style={{ color: '#0F766E' }}>{users.length}</p>
+        </Card>
+        <Card className="p-6 rounded-2xl border-2 border-[#B7D1CC]/30">
+          <p className="text-gray-600 mb-1 text-sm">Doctors</p>
+          <p className="text-3xl font-bold" style={{ color: '#0F766E' }}>{users.filter(u => u.role === "DOCTOR").length}</p>
         </Card>
         <Card className="p-6 rounded-2xl border-2 border-[#B7D1CC]/30">
           <p className="text-gray-600 mb-1 text-sm">Owners</p>
@@ -220,7 +262,7 @@ export function AdminUsers() {
             />
           </div>
           <div className="flex gap-2 overflow-x-auto">
-            {["All", "CUSTOMER", "PHARMACY_OWNER", "ADMIN"].map((role) => (
+            {["All", "DOCTOR", "CUSTOMER", "PHARMACY_OWNER", "ADMIN"].map((role) => (
               <Button
                 key={role}
                 variant={filterRole === role ? "default" : "outline"}
@@ -231,7 +273,7 @@ export function AdminUsers() {
                     : "border-2 border-[#B7D1CC] text-[#0F766E]"
                 }`}
               >
-                {role === "PHARMACY_OWNER" ? "Owners" : role.charAt(0) + role.slice(1).toLowerCase()}
+                {role === "PHARMACY_OWNER" ? "Owners" : role === "DOCTOR" ? "Doctors" : role.charAt(0) + role.slice(1).toLowerCase()}
               </Button>
             ))}
           </div>
@@ -287,6 +329,7 @@ export function AdminUsers() {
                           <SelectItem value="CUSTOMER">CUSTOMER</SelectItem>
                           <SelectItem value="PHARMACY_OWNER">OWNER</SelectItem>
                           <SelectItem value="ADMIN">ADMIN</SelectItem>
+                          <SelectItem value="DOCTOR">DOCTOR</SelectItem>
                         </SelectContent>
                       </Select>
                     </td>

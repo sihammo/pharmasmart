@@ -5,7 +5,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
-  role: "CUSTOMER" | "PHARMACY_OWNER" | "ADMIN";
+  role: "CUSTOMER" | "PHARMACY_OWNER" | "ADMIN" | "DOCTOR";
 }
 
 interface AuthContextType {

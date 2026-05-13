@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
-import { ShoppingCart, Trash2, Plus, Minus, Package, CheckCircle, Loader2, FileUp } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, Package, CheckCircle, Loader2, FileUp, Clipboard, MapPin, User as UserIcon, Calendar, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { apiClient } from "../api/client";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ export function OrdersPage() {
   const { user } = useAuth();
   const { cartItems, removeFromCart, updateQuantity, clearCart, subtotal } = useCart();
   const [orders, setOrders] = useState<any[]>([]);
+  const [digitalPrescriptions, setDigitalPrescriptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -42,21 +43,28 @@ export function OrdersPage() {
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     try {
-      const endpoint = user?.role === "PHARMACY_OWNER" ? "/orders/incoming" : "/orders/myorders";
-      const data = await apiClient(endpoint);
-      setOrders(data);
+      const orderEndpoint = user?.role === "PHARMACY_OWNER" ? "/orders/incoming" : "/orders/myorders";
+      const prescriptionEndpoint = user?.role === "PHARMACY_OWNER" ? "/prescriptions/pharmacy" : "/prescriptions/patient";
+      
+      const [orderData, prescData] = await Promise.all([
+        apiClient(orderEndpoint),
+        apiClient(prescriptionEndpoint)
+      ]);
+      
+      setOrders(orderData);
+      setDigitalPrescriptions(prescData);
     } catch (error: any) {
-      toast.error("Failed to load order history");
+      toast.error("Failed to load history");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
+    fetchData();
   }, []);
 
   const handleCheckout = async () => {
@@ -112,7 +120,7 @@ export function OrdersPage() {
         : "Order placed successfully!");
       
       clearCart();
-      fetchOrders();
+      fetchData();
     } catch (error: any) {
       toast.error(error.message || "Checkout failed");
     } finally {
@@ -131,15 +139,21 @@ export function OrdersPage() {
       </div>
 
       <Tabs defaultValue={user?.role === "PHARMACY_OWNER" ? "history" : "cart"} className="space-y-6">
-        {user?.role !== "PHARMACY_OWNER" && (
-          <TabsList className="grid w-full max-w-md grid-cols-2 h-12 p-1 rounded-xl bg-teal-50 border border-teal-100">
-            <TabsTrigger value="cart" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              Cart ({cartItems.length})
-            </TabsTrigger>
+        {(user?.role === "CUSTOMER" || user?.role === "PHARMACY_OWNER") && (
+          <TabsList className={`grid w-full max-w-2xl ${user?.role === "PHARMACY_OWNER" ? 'grid-cols-2' : 'grid-cols-3'} h-12 p-1 rounded-xl bg-teal-50 border border-teal-100`}>
+            {user?.role === "CUSTOMER" && (
+              <TabsTrigger value="cart" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                Cart ({cartItems.length})
+              </TabsTrigger>
+            )}
             <TabsTrigger value="history" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
               <Package className="w-5 h-5 mr-2" />
-              History
+              {user?.role === "PHARMACY_OWNER" ? "Client Orders" : "History"}
+            </TabsTrigger>
+            <TabsTrigger value="prescriptions" className="rounded-lg data-[state=active]:bg-[#0F766E] data-[state=active]:text-white">
+              <Clipboard className="w-5 h-5 mr-2" />
+              Digital Prescriptions
             </TabsTrigger>
           </TabsList>
         )}
@@ -366,6 +380,88 @@ export function OrdersPage() {
                   ) : (
                     <Button variant="link" className="text-teal-600 p-0 h-4">View Invoice</Button>
                   )}
+                </div>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="prescriptions" className="space-y-4">
+          {isLoading ? (
+            <div className="p-12 text-center text-gray-400">Loading prescriptions...</div>
+          ) : digitalPrescriptions.length === 0 ? (
+            <Card className="p-12 text-center rounded-2xl border-2 border-dashed border-gray-100">
+              <Clipboard className="w-16 h-16 mx-auto mb-4 text-gray-200" />
+              <h3 className="text-2xl mb-2 text-gray-600">No digital prescriptions</h3>
+              <p className="text-gray-500">
+                {user?.role === "PHARMACY_OWNER" 
+                  ? "Prescriptions sent to your pharmacy by clients will appear here." 
+                  : "Your digital prescriptions will appear here."}
+              </p>
+            </Card>
+          ) : (
+            digitalPrescriptions.map((presc) => (
+              <Card key={presc._id} className="p-6 rounded-2xl hover:shadow-md transition-shadow border-2 border-[#B7D1CC]/30">
+                <div className="flex flex-col md:flex-row justify-between gap-6">
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E]">
+                          <UserIcon className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
+                            {user?.role === "PHARMACY_OWNER" ? "Patient" : "Doctor"}
+                          </p>
+                          <p className="text-lg font-bold text-[#0F766E]">
+                            {user?.role === "PHARMACY_OWNER" ? presc.patientId.name : `Dr. ${presc.doctorId.name}`}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge className="bg-blue-100 text-blue-700 border-blue-200 rounded-full">
+                         Digital Prescription
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2">
+                       <h4 className="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                          <Info className="w-4 h-4 text-[#2F8F7E]" />
+                          Medications
+                       </h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {presc.medications.map((med: any, i: number) => (
+                             <div key={i} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                                <p className="font-bold text-sm text-[#0F766E]">{med.name}</p>
+                                <p className="text-xs text-gray-600">{med.dosage} • {med.frequency}</p>
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
+                       <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(presc.date).toLocaleDateString()}
+                       </div>
+                       {user?.role === "PHARMACY_OWNER" && (
+                         <div className="flex items-center gap-1 text-teal-600 font-medium">
+                            <Stethoscope className="w-3 h-3" />
+                            From Dr. {presc.doctorId.name}
+                         </div>
+                       )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-center gap-2 min-w-[150px]">
+                     {user?.role === "PHARMACY_OWNER" && (
+                        <Button className="w-full bg-[#0F766E] hover:bg-[#0d6560] h-12 rounded-xl">
+                           Process Order
+                        </Button>
+                     )}
+                     <Button variant="outline" className="w-full h-12 rounded-xl border-2 border-[#B7D1CC] text-[#0F766E]">
+                        View Details
+                     </Button>
+                  </div>
                 </div>
               </Card>
             ))

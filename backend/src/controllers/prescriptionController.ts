@@ -7,17 +7,13 @@ export const createPrescription = async (req: Request, res: Response): Promise<v
     const { patientId, medications, notes, appointmentId } = req.body;
     const doctorId = (req as any).user._id;
 
-    const prescription = new Prescription({
+    const prescription = await Prescription.create({
       doctorId,
       patientId,
       medications,
-      notes,
-      date: new Date()
+      notes
     });
 
-    await prescription.save();
-
-    // If linked to an appointment, mark it as completed
     if (appointmentId) {
       await Appointment.findByIdAndUpdate(appointmentId, { status: "COMPLETED" });
     }
@@ -41,24 +37,27 @@ export const getDoctorPrescriptions = async (req: Request, res: Response): Promi
 export const getPatientPrescriptions = async (req: Request, res: Response): Promise<void> => {
   try {
     const patientId = (req as any).user._id;
-    const prescriptions = await Prescription.find({ patientId })
-      .populate("doctorId", "name specialization")
-      .populate("pharmacyId", "name address");
+    const prescriptions = await Prescription.find({ patientId }).populate("doctorId", "name specialization").populate("pharmacyId", "name address");
     res.json(prescriptions);
   } catch (error: any) {
-    res.status(500).json({ message: "Error fetching your prescriptions", error: error.message });
+    res.status(500).json({ message: "Error fetching prescriptions", error: error.message });
   }
 };
 
 export const sendPrescriptionToPharmacy = async (req: Request, res: Response): Promise<void> => {
   try {
     const { prescriptionId, pharmacyId } = req.body;
-    const prescription = await Prescription.findByIdAndUpdate(
-      prescriptionId, 
-      { pharmacyId, status: "SENT_TO_PHARMACY" },
-      { new: true }
-    ).populate("pharmacyId", "name address");
-    
+    const prescription = await Prescription.findById(prescriptionId);
+
+    if (!prescription) {
+      res.status(404).json({ message: "Prescription not found" });
+      return;
+    }
+
+    prescription.pharmacyId = pharmacyId;
+    prescription.status = "SENT_TO_PHARMACY";
+    await prescription.save();
+
     res.json(prescription);
   } catch (error: any) {
     res.status(500).json({ message: "Error sending prescription", error: error.message });

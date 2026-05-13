@@ -58,3 +58,4 @@ export const pharmacyOnly = (req: AuthRequest, res: Response, next: NextFunction
     res.status(403).json({ message: "Not authorized. Only pharmacies can perform this action." });
   }
 };
+
