@@ -10,6 +10,8 @@ import pharmacyRoutes from "./routes/pharmacyRoutes";
 import medicineRoutes from "./routes/medicineRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import uploadRoutes from "./routes/uploadRoutes";
+import prescriptionRoutes from "./routes/prescriptionRoutes";
+import appointmentRoutes from "./routes/appointmentRoutes";
 
 dotenv.config();
 
@@ -31,6 +33,8 @@ app.use("/api/pharmacies", pharmacyRoutes);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 app.get("/", (req, res) => {
   res.send("PharmaSmart API is running...");
