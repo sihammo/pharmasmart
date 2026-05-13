@@ -5,9 +5,11 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["ADMIN", "CUSTOMER", "PHARMACY_OWNER"], default: "CUSTOMER" },
+    role: { type: String, enum: ["ADMIN", "CUSTOMER", "PHARMACY_OWNER", "DOCTOR"], default: "CUSTOMER" },
     phone: { type: String },
     address: { type: String },
+    specialization: { type: String },
+    licenseNumber: { type: String },
     healthProfile: {
       conditions: [{ type: String }],
       allergies: [{ type: String }],

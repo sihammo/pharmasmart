@@ -42,3 +42,19 @@ export const customerOnly = (req: AuthRequest, res: Response, next: NextFunction
     res.status(403).json({ message: "Not authorized. Only customers can perform this action." });
   }
 };
+
+export const doctorOnly = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.user && req.user.role === "DOCTOR") {
+    next();
+  } else {
+    res.status(403).json({ message: "Not authorized. Only doctors can perform this action." });
+  }
+};
+
+export const pharmacyOnly = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.user && req.user.role === "PHARMACY_OWNER") {
+    next();
+  } else {
+    res.status(403).json({ message: "Not authorized. Only pharmacies can perform this action." });
+  }
+};
