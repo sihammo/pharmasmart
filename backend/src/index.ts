@@ -27,6 +27,9 @@ app.use(express.json());
 // Serve uploaded files statically
 app.use("/uploads", express.static(path.join(__dirname, "../../uploads")));
 
+// Serve static files from the built client app
+app.use(express.static(path.join(__dirname, "../../../dist")));
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/pharmacies", pharmacyRoutes);
@@ -36,8 +39,9 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/appointments", appointmentRoutes);
 
-app.get("/", (req, res) => {
-  res.send("PharmaSmart API is running...");
+// Fallback all other GET requests to client app routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../../../dist/index.html"));
 });
 
 const PORT = process.env.PORT || 5000;
