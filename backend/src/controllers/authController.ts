@@ -15,7 +15,7 @@ const generateToken = (id: string, role: string) => {
 };
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
-  const { name, email, password, phone, role } = req.body;
+  const { name, email, password, phone, role, specialization, licenseNumber, schedule, status } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -34,7 +34,11 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       email,
       password: hashedPassword,
       phone,
-      role
+      role,
+      specialization,
+      licenseNumber,
+      schedule,
+      status: status || "ACTIVE"
     });
 
     if (user) {
@@ -229,5 +233,32 @@ export const updateUserRole = async (req: Request, res: Response): Promise<void>
     }
   } catch (error: any) {
     res.status(400).json({ message: "Update role failed", error: error.message });
+  }
+};
+
+export const updateDoctorDetails = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (user && user.role === "DOCTOR") {
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+      user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
+      user.specialization = req.body.specialization !== undefined ? req.body.specialization : user.specialization;
+      user.licenseNumber = req.body.licenseNumber !== undefined ? req.body.licenseNumber : user.licenseNumber;
+      user.status = req.body.status !== undefined ? req.body.status : user.status;
+      user.schedule = req.body.schedule !== undefined ? req.body.schedule : user.schedule;
+
+      if (req.body.password) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(req.body.password, salt);
+      }
+
+      const updatedDoctor = await user.save();
+      res.json(updatedDoctor);
+    } else {
+      res.status(404).json({ message: "Doctor not found" });
+    }
+  } catch (error: any) {
+    res.status(400).json({ message: "Update doctor failed", error: error.message });
   }
 };

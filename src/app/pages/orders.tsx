@@ -8,6 +8,7 @@ import { apiClient } from "../api/client";
 import { toast } from "sonner";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { PharmacyPrescriptionsTab } from "../components/PharmacyPrescriptionsTab";
 
 export function OrdersPage() {
   const { user } = useAuth();
@@ -387,17 +388,15 @@ export function OrdersPage() {
         </TabsContent>
 
         <TabsContent value="prescriptions" className="space-y-4">
-          {isLoading ? (
+          {user?.role === "PHARMACY_OWNER" ? (
+            <PharmacyPrescriptionsTab />
+          ) : isLoading ? (
             <div className="p-12 text-center text-gray-400">Loading prescriptions...</div>
           ) : digitalPrescriptions.length === 0 ? (
             <Card className="p-12 text-center rounded-2xl border-2 border-dashed border-gray-100">
               <Clipboard className="w-16 h-16 mx-auto mb-4 text-gray-200" />
               <h3 className="text-2xl mb-2 text-gray-600">No digital prescriptions</h3>
-              <p className="text-gray-500">
-                {user?.role === "PHARMACY_OWNER" 
-                  ? "Prescriptions sent to your pharmacy by clients will appear here." 
-                  : "Your digital prescriptions will appear here."}
-              </p>
+              <p className="text-gray-500 font-medium">Your digital prescriptions will appear here.</p>
             </Card>
           ) : (
             digitalPrescriptions.map((presc) => (
@@ -410,12 +409,8 @@ export function OrdersPage() {
                           <UserIcon className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
-                            {user?.role === "PHARMACY_OWNER" ? "Patient" : "Doctor"}
-                          </p>
-                          <p className="text-lg font-bold text-[#0F766E]">
-                            {user?.role === "PHARMACY_OWNER" ? presc.patientId.name : `Dr. ${presc.doctorId.name}`}
-                          </p>
+                          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Doctor</p>
+                          <p className="text-lg font-bold text-[#0F766E]">Dr. {presc.doctorId.name}</p>
                         </div>
                       </div>
                       <Badge className="bg-blue-100 text-blue-700 border-blue-200 rounded-full">
@@ -443,21 +438,10 @@ export function OrdersPage() {
                           <Calendar className="w-3 h-3" />
                           {new Date(presc.date).toLocaleDateString()}
                        </div>
-                       {user?.role === "PHARMACY_OWNER" && (
-                         <div className="flex items-center gap-1 text-teal-600 font-medium">
-                            <Stethoscope className="w-3 h-3" />
-                            From Dr. {presc.doctorId.name}
-                         </div>
-                       )}
                     </div>
                   </div>
 
                   <div className="flex flex-col justify-center gap-2 min-w-[150px]">
-                     {user?.role === "PHARMACY_OWNER" && (
-                        <Button className="w-full bg-[#0F766E] hover:bg-[#0d6560] h-12 rounded-xl">
-                           Process Order
-                        </Button>
-                     )}
                      <Button variant="outline" className="w-full h-12 rounded-xl border-2 border-[#B7D1CC] text-[#0F766E]">
                         View Details
                      </Button>

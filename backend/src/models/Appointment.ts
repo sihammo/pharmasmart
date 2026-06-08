@@ -8,7 +8,7 @@ const appointmentSchema = new mongoose.Schema(
     time: { type: String, required: true }, // HH:mm
     status: { 
       type: String, 
-      enum: ["SCHEDULED", "COMPLETED", "CANCELLED", "IN_PROGRESS"], 
+      enum: ["PENDING", "SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"], 
       default: "SCHEDULED" 
     },
     reason: { type: String },

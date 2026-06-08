@@ -13,6 +13,7 @@ const prescriptionSchema = new mongoose.Schema(
     patientId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     pharmacyId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Assigned when patient sends it to a pharmacy
     medications: [medicationSchema],
+    diagnosis: { type: String },
     notes: { type: String },
     status: { 
       type: String, 

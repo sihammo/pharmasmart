@@ -38,13 +38,23 @@ export function DoctorDashboard() {
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [medications, setMedications] = useState([{ name: "", dosage: "", frequency: "", duration: "" }]);
+  const [diagnosis, setDiagnosis] = useState("");
   const [notes, setNotes] = useState("");
+  const [stats, setStats] = useState({
+    patientsToday: 0,
+    completedConsultations: 0,
+    pendingAppointments: 0,
+    prescriptionsSent: 0
+  });
 
   const fetchAppointments = async () => {
     setIsLoading(true);
     try {
       const data = await apiClient("/appointments/doctor/today");
       setAppointments(data);
+      
+      const statsData = await apiClient("/appointments/doctor/stats");
+      setStats(statsData);
     } catch (error: any) {
       toast.error(error.message || "Failed to load appointments");
     } finally {
@@ -80,6 +90,7 @@ export function DoctorDashboard() {
         body: JSON.stringify({
           patientId: selectedAppointment.patientId._id,
           medications,
+          diagnosis,
           notes,
           appointmentId: selectedAppointment._id
         }),
@@ -87,6 +98,7 @@ export function DoctorDashboard() {
       toast.success("Prescription sent successfully");
       setIsPrescriptionModalOpen(false);
       setMedications([{ name: "", dosage: "", frequency: "", duration: "" }]);
+      setDiagnosis("");
       setNotes("");
       fetchAppointments();
     } catch (error: any) {
@@ -113,7 +125,7 @@ export function DoctorDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-r from-[#0F766E] to-[#2F8F7E] p-8 rounded-[2rem] text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-3">Welcome back, Dr. {user?.name}</h1>
-          <p className="text-xl text-teal-50 opacity-90">You have {appointments.filter(a => a.status === 'SCHEDULED').length} patients waiting for you today.</p>
+          <p className="text-xl text-teal-50 opacity-90">You have {appointments.filter(a => a.status === 'SCHEDULED' || a.status === 'PENDING').length} patients waiting for you today.</p>
         </div>
         <div className="flex gap-4 relative z-10">
            <Card className="bg-white/20 backdrop-blur-md border-none p-4 rounded-2xl flex items-center gap-3">
@@ -132,17 +144,16 @@ export function DoctorDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { title: "Today's Appointments", value: appointments.length.toString(), icon: Users, color: "#0F766E" },
-          { title: "Pending Patients", value: appointments.filter(a => a.status === 'SCHEDULED' || a.status === 'IN_PROGRESS').length.toString(), icon: Clock, color: "#2F8F7E" },
-          { title: "Prescriptions Sent", value: "24", icon: Clipboard, color: "#5FA79A" },
-          { title: "Patient Satisfaction", value: "98%", icon: Activity, color: "#0F766E" },
+          { title: "Today's Patients", value: stats.patientsToday.toString(), icon: Users, color: "#0F766E" },
+          { title: "Completed Consultations", value: stats.completedConsultations.toString(), icon: CheckCircle, color: "#2F8F7E" },
+          { title: "Pending Appointments", value: stats.pendingAppointments.toString(), icon: Clock, color: "#5FA79A" },
+          { title: "Prescriptions Sent", value: stats.prescriptionsSent.toString(), icon: Clipboard, color: "#0F766E" },
         ].map((stat, i) => (
           <Card key={i} className="p-6 rounded-2xl border-2 border-[#B7D1CC]/30 hover:border-[#0F766E]/50 transition-all group shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 rounded-xl bg-[#B7D1CC]/20 group-hover:bg-[#0F766E]/10 transition-colors">
                 <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
               </div>
-              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100">+4%</Badge>
             </div>
             <p className="text-gray-500 text-sm font-medium">{stat.title}</p>
             <p className="text-3xl font-bold mt-1" style={{ color: '#0F766E' }}>{stat.value}</p>
@@ -156,14 +167,8 @@ export function DoctorDashboard() {
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#0F766E' }}>
               <Clock className="w-6 h-6" />
-              Today's Schedule
+              Today's Schedule & Patient Queue
             </h2>
-            <div className="flex gap-2">
-               <Button variant="outline" size="sm" className="rounded-xl border-[#B7D1CC]">
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filter
-               </Button>
-            </div>
           </div>
 
           <Card className="rounded-[2rem] overflow-hidden border-2 border-[#B7D1CC]/30 shadow-sm">
@@ -242,6 +247,18 @@ export function DoctorDashboard() {
                                             <p className="text-xs text-teal-600 font-semibold uppercase tracking-wider">Patient</p>
                                             <p className="font-bold text-[#0F766E]">{selectedAppointment?.patientId.name}</p>
                                          </div>
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        <Label htmlFor="diagnosis" className="text-gray-700 font-semibold">Diagnosis</Label>
+                                        <Input
+                                          id="diagnosis"
+                                          placeholder="e.g. Acute Migraine, Hypertension"
+                                          value={diagnosis}
+                                          onChange={(e) => setDiagnosis(e.target.value)}
+                                          required
+                                          className="rounded-xl"
+                                        />
                                       </div>
 
                                       <div className="space-y-4">

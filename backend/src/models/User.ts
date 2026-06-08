@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema(
     address: { type: String },
     specialization: { type: String },
     licenseNumber: { type: String },
+    status: { type: String, enum: ["ACTIVE", "INACTIVE"], default: "ACTIVE" },
+    schedule: {
+      days: [{ type: String }], // e.g. ["Monday", "Tuesday"]
+      timeSlots: [{ type: String }] // e.g. ["09:00", "10:00", "11:00"]
+    },
     healthProfile: {
       conditions: [{ type: String }],
       allergies: [{ type: String }],

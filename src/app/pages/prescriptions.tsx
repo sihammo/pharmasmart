@@ -191,10 +191,75 @@ export function PatientPrescriptions() {
                            Sent Successfully
                         </Button>
                      )}
-                     <Button variant="outline" className="w-full h-12 rounded-2xl border-2 border-[#B7D1CC] text-[#0F766E] font-bold">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          const printWindow = window.open("", "_blank");
+                          if (!printWindow) return;
+                          printWindow.document.write(`
+                            <html>
+                            <head>
+                              <title>Prescription - PharmaSmart</title>
+                              <style>
+                                body { font-family: sans-serif; padding: 40px; color: #333; }
+                                .header { border-bottom: 2px solid #0F766E; padding-bottom: 20px; margin-bottom: 25px; }
+                                .logo { font-size: 24px; font-weight: bold; color: #0F766E; }
+                                .details { display: flex; justify-content: space-between; margin-bottom: 20px; }
+                                .doctor-info { text-align: right; }
+                                .meds-table { w-full; border-collapse: collapse; margin-top: 25px; }
+                                .meds-table th, .meds-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                                .meds-table th { background: #f2f2f2; }
+                                .notes { margin-top: 30px; font-style: italic; }
+                              </style>
+                            </head>
+                            <body onload="window.print()">
+                              <div class="header">
+                                <div class="logo">PharmaSmart Digital Prescription</div>
+                                <p>Date: ${new Date(presc.date).toLocaleDateString()}</p>
+                              </div>
+                              <div class="details">
+                                <div>
+                                  <h3>Patient</h3>
+                                  <p>Registered Account User</p>
+                                </div>
+                                <div class="doctor-info">
+                                  <h3>Doctor Details</h3>
+                                  <p><strong>Dr. ${presc.doctorId.name}</strong></p>
+                                  <p>Specialty: ${presc.doctorId.specialization || "General Medicine"}</p>
+                                </div>
+                              </div>
+                              <h3>Medications</h3>
+                              <table class="meds-table" style="width: 100%">
+                                <thead>
+                                  <tr>
+                                    <th>Medicine Name</th>
+                                    <th>Dosage</th>
+                                    <th>Frequency</th>
+                                    <th>Duration</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  ${presc.medications.map((m: any) => `
+                                    <tr>
+                                      <td>${m.name}</td>
+                                      <td>${m.dosage}</td>
+                                      <td>${m.frequency}</td>
+                                      <td>${m.duration}</td>
+                                    </tr>
+                                  `).join("")}
+                                </tbody>
+                              </table>
+                              ${presc.notes ? `<div class="notes"><strong>Notes:</strong> ${presc.notes}</div>` : ""}
+                            </body>
+                            </html>
+                          `);
+                          printWindow.document.close();
+                        }}
+                        className="w-full h-12 rounded-2xl border-2 border-[#B7D1CC] text-[#0F766E] font-bold"
+                      >
                         <ExternalLink className="w-4 h-4 mr-2" />
                         Download PDF
-                     </Button>
+                      </Button>
                   </div>
                </div>
             </Card>

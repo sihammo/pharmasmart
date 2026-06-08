@@ -39,6 +39,20 @@ export function AdminUsers() {
     licenseNumber: ""
   });
 
+  const [selectedDoctorForEdit, setSelectedDoctorForEdit] = useState<any>(null);
+  const [editDoctorData, setEditDoctorData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    specialization: "",
+    licenseNumber: "",
+    status: "ACTIVE",
+    schedule: {
+      days: [] as string[],
+      timeSlots: [] as string[]
+    }
+  });
+
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
@@ -103,11 +117,40 @@ export function AdminUsers() {
     }
   };
 
+  const handleEditDoctorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDoctorForEdit) return;
+    try {
+      await apiClient(`/auth/users/doctor/${selectedDoctorForEdit._id}`, {
+        method: "PUT",
+        body: JSON.stringify(editDoctorData)
+      });
+      toast.success("Doctor details updated successfully");
+      setSelectedDoctorForEdit(null);
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update doctor details");
+    }
+  };
+
+  const openEditDoctorModal = (doctor: any) => {
+    setSelectedDoctorForEdit(doctor);
+    setEditDoctorData({
+      name: doctor.name || "",
+      email: doctor.email || "",
+      phone: doctor.phone || "",
+      specialization: doctor.specialization || "",
+      licenseNumber: doctor.licenseNumber || "",
+      status: doctor.status || "ACTIVE",
+      schedule: doctor.schedule || { days: [], timeSlots: [] }
+    });
+  };
+
   const filteredUsers = users.filter((user) => {
     const name = user.name || "";
     const email = user.email || "";
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         email.toLowerCase().includes(searchQuery.toLowerCase());
+                          email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = filterRole === "All" || user.role === filterRole;
     return matchesSearch && matchesRole;
   });
@@ -337,14 +380,26 @@ export function AdminUsers() {
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className="p-6 text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleDeleteUser(user._id)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        {user.role === "DOCTOR" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDoctorModal(user)}
+                            className="rounded-xl border-[#B7D1CC] text-[#0F766E] hover:bg-teal-50"
+                          >
+                            Edit Profile
+                          </Button>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleDeleteUser(user._id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -353,6 +408,120 @@ export function AdminUsers() {
           </table>
         </div>
       </Card>
+
+      {/* Edit Doctor Modal */}
+      <Dialog open={selectedDoctorForEdit !== null} onOpenChange={(open) => !open && setSelectedDoctorForEdit(null)}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-[#0F766E]">Edit Doctor Details</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditDoctorSubmit} className="space-y-4 py-4 max-h-[75vh] overflow-y-auto pr-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Doctor Name</Label>
+              <Input 
+                id="edit-name" 
+                value={editDoctorData.name} 
+                onChange={(e) => setEditDoctorData({...editDoctorData, name: e.target.value})}
+                placeholder="Dr. John Doe"
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email Address</Label>
+              <Input 
+                id="edit-email" 
+                type="email"
+                value={editDoctorData.email} 
+                onChange={(e) => setEditDoctorData({...editDoctorData, email: e.target.value})}
+                placeholder="dr.john@example.com" 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Input 
+                id="edit-phone" 
+                value={editDoctorData.phone} 
+                onChange={(e) => setEditDoctorData({...editDoctorData, phone: e.target.value})}
+                placeholder="+1 (555) 000-0000" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-spec">Specialization</Label>
+              <Input 
+                id="edit-spec" 
+                value={editDoctorData.specialization} 
+                onChange={(e) => setEditDoctorData({...editDoctorData, specialization: e.target.value})}
+                placeholder="Pediatrician, Oncologist, etc." 
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-license">License Number</Label>
+              <Input 
+                id="edit-license" 
+                value={editDoctorData.licenseNumber} 
+                onChange={(e) => setEditDoctorData({...editDoctorData, licenseNumber: e.target.value})}
+                placeholder="LIC-987654" 
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select value={editDoctorData.status} onValueChange={(v) => setEditDoctorData({...editDoctorData, status: v})}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                  <SelectItem value="INACTIVE">INACTIVE</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Schedule Section */}
+            <div className="space-y-2 pt-2 border-t border-gray-100">
+              <Label className="font-bold text-gray-700">Manage Weekly Schedule</Label>
+              
+              <div className="space-y-1">
+                <Label className="text-xs text-gray-500">Days Active (comma separated)</Label>
+                <Input 
+                  placeholder="Monday, Wednesday, Friday"
+                  value={editDoctorData.schedule?.days?.join(", ") || ""}
+                  onChange={(e) => {
+                    const days = e.target.value.split(",").map(d => d.trim()).filter(Boolean);
+                    setEditDoctorData({
+                      ...editDoctorData,
+                      schedule: { ...editDoctorData.schedule, days }
+                    });
+                  }}
+                />
+              </div>
+
+              <div className="space-y-1 mt-2">
+                <Label className="text-xs text-gray-500">Time Slots (comma separated)</Label>
+                <Input 
+                  placeholder="09:00, 10:00, 14:00, 15:00"
+                  value={editDoctorData.schedule?.timeSlots?.join(", ") || ""}
+                  onChange={(e) => {
+                    const timeSlots = e.target.value.split(",").map(t => t.trim()).filter(Boolean);
+                    setEditDoctorData({
+                      ...editDoctorData,
+                      schedule: { ...editDoctorData.schedule, timeSlots }
+                    });
+                  }}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button type="submit" className="w-full bg-[#0F766E] hover:bg-[#0d6560] h-12 text-lg">
+                Save Doctor Details
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
